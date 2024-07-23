@@ -2,6 +2,7 @@ import pygame
 import sys
 
 from src.board import Board
+from src.game import Game
 from src.player import Player
 from src.config import SQUARE_SIZE, CONSOLE_WIDTH, screen, RED, GREEN, BLUE, YELLOW, LIGHT_WHITE, Direction
 from src.config import GRID_SIZE, WHITE, BLACK, SCREEN_HEIGHT
@@ -35,24 +36,9 @@ def draw_console(current_player, show_continue_text=False):
 
     # New code to display the player's remaining walls
     walls_left_text = font.render(f"Walls left: {current_player.walls_left}", True, current_player.color)
-    screen.blit(walls_left_text, (10, v_option_rect.bottom + 50))  # Adjust the Y position as needed to place it under the continue text
+    screen.blit(walls_left_text, (
+        10, v_option_rect.bottom + 50))  # Adjust the Y position as needed to place it under the continue text
 
-
-
-
-def handle_key_press(event, current_player, players):
-    new_x, new_y = current_player.x, current_player.y
-    if event.key == pygame.K_UP:
-        new_y -= 1
-    elif event.key == pygame.K_DOWN:
-        new_y += 1
-    elif event.key == pygame.K_LEFT:
-        new_x -= 1
-    elif event.key == pygame.K_RIGHT:
-        new_x += 1
-        current_player.x, current_player.y = new_x, new_y
-        return True
-    return False
 
 #TODO: make game object
 #TODO: make main
@@ -68,7 +54,6 @@ def main():
     ]
     current_player_index = 0
     selected_orientation = 'h'
-    game_over = False
 
     while True:
         for event in pygame.event.get():
@@ -184,4 +169,12 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    board = Board()
+    players = [
+        Player(RED, "Red", Direction.UP),  # Red
+        Player(GREEN, "Green", Direction.DOWN),  # Green
+        Player(BLUE, "Blue", Direction.LEFT),  # Blue
+        Player(YELLOW, "Yellow", Direction.RIGHT)  # Yellow
+    ]
+    game = Game(screen, players, board)
+    game.run()
