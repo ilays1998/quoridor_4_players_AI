@@ -2,6 +2,7 @@ import pygame
 from src.config import SQUARE_SIZE, CONSOLE_WIDTH, screen, GRID_SIZE, WALL_THICKNESS, WHITE, BROWN, GRID_COLOR, \
     Direction
 
+
 # TODO: draw as static function that get Board as parameter
 # TODO: player jump on tile of another player
 def _get_goal_positions(goal_direction):
@@ -13,7 +14,6 @@ def _get_goal_positions(goal_direction):
         return {(0, col) for col in range(GRID_SIZE)}
     elif goal_direction == Direction.RIGHT:
         return {(GRID_SIZE - 1, col) for col in range(GRID_SIZE)}
-
 
 
 class Board:
@@ -89,7 +89,7 @@ class Board:
         elif direction == Direction.DOWN:
             if new_x < GRID_SIZE - 1 and self.h_walls[new_y - 1][new_x]:
                 return False
-            if self.h_walls[new_y - 1][new_x - 1]:
+            if new_x > 0 and self.h_walls[new_y - 1][new_x - 1]:
                 return False
         elif direction == Direction.LEFT:
             if new_y < GRID_SIZE - 1 and self.v_walls[new_y][new_x]:
@@ -99,7 +99,7 @@ class Board:
         elif direction == Direction.RIGHT:
             if new_y < GRID_SIZE - 1 and self.v_walls[new_y][new_x - 1]:
                 return False
-            if self.v_walls[new_y - 1][new_x - 1]:
+            if new_y > 0 and self.v_walls[new_y - 1][new_x - 1]:
                 return False
         return True
 
@@ -135,6 +135,14 @@ class Board:
                         queue.append((new_x, new_y))
                         visited.add((new_x, new_y))
 
+        for y, row in enumerate(self.h_walls):
+            for x, has_wall in enumerate(row):
+                if has_wall:
+                    print(f"Horizontal wall at: ({x}, {y})")
+        for y, row in enumerate(self.v_walls):
+            for x, has_wall in enumerate(row):
+                if has_wall:
+                    print(f"Vertical wall at: ({x}, {y})")
         return False  # No path to the goal was found
 
     # with print the path
