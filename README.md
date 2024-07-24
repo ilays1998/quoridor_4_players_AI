@@ -64,6 +64,10 @@ To set up the game environment on your local machine, follow these steps:
    - Plan your moves carefully, considering the positions of other players.
    - Use walls strategically to block your opponents while navigating your pawn towards the goal.
 
+## Built With
+
+* [Pygame](https://www.pygame.org/) - The library used for game development
+
 ## Contributing
 We welcome contributions! Please follow these steps to contribute to the project:
 
