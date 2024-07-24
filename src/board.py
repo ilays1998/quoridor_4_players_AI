@@ -2,15 +2,7 @@ from src.config import GRID_SIZE, Direction
 
 
 # TODO: draw as static function that get Board as parameter
-def _get_goal_positions(goal_direction):
-    if goal_direction == Direction.UP:
-        return {(row, 0) for row in range(GRID_SIZE)}
-    elif goal_direction == Direction.DOWN:
-        return {(row, GRID_SIZE - 1) for row in range(GRID_SIZE)}
-    elif goal_direction == Direction.LEFT:
-        return {(0, col) for col in range(GRID_SIZE)}
-    elif goal_direction == Direction.RIGHT:
-        return {(GRID_SIZE - 1, col) for col in range(GRID_SIZE)}
+
 
 
 class Board:
@@ -18,6 +10,17 @@ class Board:
         self.grid = [[None for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
         self.h_walls = [[False for _ in range(GRID_SIZE - 1)] for _ in range(GRID_SIZE - 1)]
         self.v_walls = [[False for _ in range(GRID_SIZE - 1)] for _ in range(GRID_SIZE - 1)]
+
+    @staticmethod
+    def get_goal_positions(goal_direction):
+        if goal_direction == Direction.UP:
+            return {(row, 0) for row in range(GRID_SIZE)}
+        elif goal_direction == Direction.DOWN:
+            return {(row, GRID_SIZE - 1) for row in range(GRID_SIZE)}
+        elif goal_direction == Direction.LEFT:
+            return {(0, col) for col in range(GRID_SIZE)}
+        elif goal_direction == Direction.RIGHT:
+            return {(GRID_SIZE - 1, col) for col in range(GRID_SIZE)}
 
     def can_place_wall(self, x, y, orientation):
         if x >= GRID_SIZE - 1 or y >= GRID_SIZE - 1:
@@ -94,7 +97,7 @@ class Board:
     def can_player_win(self, player):
         from collections import deque
 
-        goal_positions = _get_goal_positions(player.goal)
+        goal_positions = self.get_goal_positions(player.goal)
         start = (player.x, player.y)
         queue = deque([start])
         visited = set([start])

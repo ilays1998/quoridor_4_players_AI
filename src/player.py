@@ -27,10 +27,6 @@ class Player:
         self.color = color
         self.name = name
 
-    def draw(self):
-        pygame.draw.circle(screen, self.color, (self.x * SQUARE_SIZE + SQUARE_SIZE // 2 + CONSOLE_WIDTH,
-                                                self.y * SQUARE_SIZE + SQUARE_SIZE // 2), SQUARE_SIZE // 4)
-
     def get_position(self):
         return self.x, self.y
 
