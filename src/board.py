@@ -84,7 +84,7 @@ class Board:
         if direction == Direction.UP:
             if new_x < GRID_SIZE - 1 and self.h_walls[new_y][new_x]:
                 return False
-            if self.h_walls[new_y][new_x - 1]:
+            if new_x > 0 and self.h_walls[new_y][new_x - 1]:
                 return False
         elif direction == Direction.DOWN:
             if new_x < GRID_SIZE - 1 and self.h_walls[new_y - 1][new_x]:
@@ -94,7 +94,7 @@ class Board:
         elif direction == Direction.LEFT:
             if new_y < GRID_SIZE - 1 and self.v_walls[new_y][new_x]:
                 return False
-            if self.v_walls[new_y - 1][new_x]:
+            if new_y > 0 and self.v_walls[new_y - 1][new_x]:
                 return False
         elif direction == Direction.RIGHT:
             if new_y < GRID_SIZE - 1 and self.v_walls[new_y][new_x - 1]:
