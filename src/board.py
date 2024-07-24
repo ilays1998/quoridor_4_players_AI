@@ -1,10 +1,7 @@
-import pygame
-from src.config import SQUARE_SIZE, CONSOLE_WIDTH, screen, GRID_SIZE, WALL_THICKNESS, WHITE, BROWN, GRID_COLOR, \
-    Direction
+from src.config import GRID_SIZE, Direction
 
 
 # TODO: draw as static function that get Board as parameter
-# TODO: player jump on tile of another player
 def _get_goal_positions(goal_direction):
     if goal_direction == Direction.UP:
         return {(row, 0) for row in range(GRID_SIZE)}
@@ -21,26 +18,6 @@ class Board:
         self.grid = [[None for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
         self.h_walls = [[False for _ in range(GRID_SIZE - 1)] for _ in range(GRID_SIZE - 1)]
         self.v_walls = [[False for _ in range(GRID_SIZE - 1)] for _ in range(GRID_SIZE - 1)]
-
-    def draw(self):
-        for x in range(GRID_SIZE):
-            for y in range(GRID_SIZE):
-                rect = pygame.Rect(x * SQUARE_SIZE + CONSOLE_WIDTH, y * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
-                pygame.draw.rect(screen, GRID_COLOR, rect, 1)
-
-        for x in range(GRID_SIZE - 1):
-            for y in range(GRID_SIZE - 1):
-                if self.h_walls[y][x]:
-                    wall_rect = pygame.Rect(x * SQUARE_SIZE + CONSOLE_WIDTH,
-                                            (y + 1) * SQUARE_SIZE - WALL_THICKNESS // 2,
-                                            SQUARE_SIZE * 2, WALL_THICKNESS)
-                    pygame.draw.rect(screen, BROWN, wall_rect)
-
-                if self.v_walls[y][x]:
-                    wall_rect = pygame.Rect((x + 1) * SQUARE_SIZE + CONSOLE_WIDTH - WALL_THICKNESS // 2,
-                                            y * SQUARE_SIZE,
-                                            WALL_THICKNESS, SQUARE_SIZE * 2)
-                    pygame.draw.rect(screen, BROWN, wall_rect)
 
     def can_place_wall(self, x, y, orientation):
         if x >= GRID_SIZE - 1 or y >= GRID_SIZE - 1:
@@ -135,46 +112,4 @@ class Board:
                         queue.append((new_x, new_y))
                         visited.add((new_x, new_y))
 
-        for y, row in enumerate(self.h_walls):
-            for x, has_wall in enumerate(row):
-                if has_wall:
-                    print(f"Horizontal wall at: ({x}, {y})")
-        for y, row in enumerate(self.v_walls):
-            for x, has_wall in enumerate(row):
-                if has_wall:
-                    print(f"Vertical wall at: ({x}, {y})")
         return False  # No path to the goal was found
-
-    # with print the path
-    # def can_player_win(self, player, players):
-    #     from collections import deque
-    #
-    #     goal_positions = _get_goal_positions(player.goal)
-    #     start = (player.x, player.y)
-    #     queue = deque([start])
-    #     visited = set([start])
-    #     predecessor = {start: None}  # Track the predecessor of each cell
-    #
-    #     while queue:
-    #         x, y = queue.popleft()
-    #         if (x, y) in goal_positions:
-    #             # Reconstruct the path from goal to start
-    #             path = []
-    #             current = (x, y)
-    #             while current is not None:
-    #                 path.append(current)
-    #                 current = predecessor[current]
-    #             path.reverse()  # Reverse to get the path from start to goal
-    #             print("Winning Path:", path)  # Print or return the path
-    #             return True  # Found a path to the goal
-    #
-    #         for move in [((-1, 0), Direction.LEFT), ((1, 0), Direction.RIGHT),
-    #                      ((0, -1), Direction.UP), ((0, 1), Direction.DOWN)]:
-    #             new_x, new_y = x + move[0][0], y + move[0][1]
-    #             if 0 <= new_x < GRID_SIZE and 0 <= new_y < GRID_SIZE and (new_x, new_y) not in visited:
-    #                 if self.is_move_legal(new_x, new_y, players, move[1]):
-    #                     queue.append((new_x, new_y))
-    #                     visited.add((new_x, new_y))
-    #                     predecessor[(new_x, new_y)] = (x, y)  # Set the predecessor
-    #
-    #     return False  # No path to the goal was found

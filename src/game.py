@@ -6,12 +6,13 @@ from src.player import Player
 
 
 class Game:
-    def __init__(self, screen, players, board):
+    def __init__(self, screen, players, board, draw):
         self.screen = screen
         self.players = players
         self.board = board
         self.current_player_index = 0
         self.selected_orientation = 'h'
+        self.draw = draw
         self.clock = pygame.time.Clock()
 
     @staticmethod
@@ -84,16 +85,13 @@ class Game:
                 break
 
         if player_jump_to_win or self.board.is_move_legal(new_x, new_y, self.players, direction):
-            self.show_pseudo_move(new_x, new_y)
+            self.draw.draw_pseudo_move(Player((128, 128, 128), "pseudo", x=new_x, y=new_y), current_player,
+                                       self.selected_orientation)
+            self.draw.update_screen()
             next_event = self.wait_for_next_event()
             if next_event.type == pygame.KEYDOWN and next_event.key == pygame.K_RETURN:
                 self.finalize_player_move(current_player, new_x, new_y)
 
-    def show_pseudo_move(self, new_x, new_y):
-        pseudo_player = Player((128, 128, 128), "pseudo", x=new_x, y=new_y)
-        pseudo_player.draw()
-        self.draw_console(self.players[self.current_player_index], show_continue_text=True)
-        pygame.display.flip()
 
     @staticmethod
     def wait_for_next_event():
@@ -105,61 +103,18 @@ class Game:
     def finalize_player_move(self, current_player, new_x, new_y):
         current_player.x, current_player.y = new_x, new_y
         if self.board.check_win_condition(current_player.goal, current_player.x, current_player.y):
-            self.display_winner_message(current_player)
+            self.player_win(current_player)
         self.current_player_index = (self.current_player_index + 1) % len(self.players)
 
-    def display_winner_message(self, current_player):
-        self.screen.fill(LIGHT_WHITE)
-        self.board.draw()
-        for player in self.players:
-            player.draw()
-        pygame.draw.rect(self.screen, LIGHT_WHITE, (0, 0, CONSOLE_WIDTH, SCREEN_HEIGHT))
-        font = pygame.font.Font(None, 30)
-        text = font.render(f"{current_player.name} player wins!", True, current_player.color)
-        self.screen.blit(text, (10, SCREEN_HEIGHT // 2))
+    def player_win(self, current_player):
+        self.draw.draw_winner_message(self.board, self.players, current_player)
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
-            pygame.display.flip()
+            self.draw.update_screen()
             self.clock.tick(60)
-
-    def draw_game_screen(self):
-        self.screen.fill(LIGHT_WHITE)
-        self.board.draw()
-        for player in self.players:
-            player.draw()
-        self.draw_console(self.players[self.current_player_index])
-        pygame.display.flip()
-
-    def draw_console(self, current_player, show_continue_text=False):
-        pygame.draw.rect(self.screen, BLACK, (0, 0, CONSOLE_WIDTH, SCREEN_HEIGHT))
-        font = pygame.font.Font(None, 36)
-        text = font.render(f"Player: {current_player.name}", True, current_player.color)
-        self.screen.blit(text, (10, 10))
-
-        h_option_rect = pygame.Rect(10, 60, 180, 50)
-        v_option_rect = pygame.Rect(10, h_option_rect.bottom + 10, 180, 50)
-
-        pygame.draw.rect(self.screen, current_player.color if self.selected_orientation == 'h' else WHITE, h_option_rect)
-        pygame.draw.rect(self.screen, current_player.color if self.selected_orientation == 'v' else WHITE, v_option_rect)
-
-        h_text = font.render("Horizontal", True, BLACK)
-        v_text = font.render("Vertical", True, BLACK)
-
-        self.screen.blit(h_text, (20, 70))
-        self.screen.blit(v_text, (20, 130))
-
-        if show_continue_text:
-            continue_font = pygame.font.Font(None, 24)
-            continue_text = continue_font.render("Press Enter to continue", True, WHITE)
-            self.screen.blit(continue_text, (10, v_option_rect.bottom + 20))  # Adjust the position as needed
-
-        # New code to display the player's remaining walls
-        walls_left_text = font.render(f"Walls left: {current_player.walls_left}", True, current_player.color)
-        self.screen.blit(walls_left_text, (
-        10, v_option_rect.bottom + 50))  # Adjust the Y position as needed to place it under the continue text
 
     def run(self):
         while True:
@@ -171,6 +126,9 @@ class Game:
                 elif event.type == pygame.KEYDOWN:
                     self.handle_key_down(event)
 
-            self.draw_game_screen()
+            #self.draw_game_screen()
+
+            self.draw.draw_game_screen(self.board, self.players, self.current_player_index, self.selected_orientation)
+            self.draw.update_screen()
             self.clock.tick(60)
 
