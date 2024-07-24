@@ -42,7 +42,7 @@ To set up the game environment on your local machine, follow these steps:
 
 ## Game Preview
 
-![Quoridor 4 Player Game](/assets/game_preview.png)
+<img src="/assets/game_preview.png" width="500" alt="Quoridor 4 Player Game">
 
 ## How to Play
 
