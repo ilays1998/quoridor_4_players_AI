@@ -14,9 +14,8 @@ def set_goal(direction):
         return Direction.RIGHT
 
 
-# TODO: draw as static function that get Player as parameter
 class Player:
-    def __init__(self, color, name, direction=None, x=0, y=0):
+    def __init__(self, color, name, direction=None, x=0, y=0, player_is_AI=False):
         self.goal = None
         if direction is None:
             self.x, self.y = x, y
@@ -26,6 +25,8 @@ class Player:
         self.walls_left = 5
         self.color = color
         self.name = name
+        self.player_is_AI: bool = player_is_AI
+
 
     def get_position(self):
         return self.x, self.y

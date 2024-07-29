@@ -49,6 +49,7 @@ class Draw:
         self.draw_board(board)  # Assuming board.draw() is adapted to accept a screen parameter
         for player in players:
             self.draw_player(player)
+        self.draw_player(current_player)
         pygame.draw.rect(self.screen, LIGHT_WHITE, (0, 0, CONSOLE_WIDTH, SCREEN_HEIGHT))
         self.draw_message(f"{current_player.name} player wins!", current_player.color, 30,
                           (10, SCREEN_HEIGHT // 2))

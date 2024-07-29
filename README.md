@@ -1,4 +1,4 @@
-# Quoridor 4 Players Game
+# Quoridor AI 4 Players Game
 
 ## Description
 Quoridor 4 Players Game is a strategic board game where four players compete to be the first to navigate their pawn to the opposite side of the board. Unlike the classic two-player Quoridor, this version introduces a dynamic and complex layer of strategy with four players, making each move critical. The game stands out with its AI opponents, offering a challenging experience for solo players, and its unique board design that accommodates four players simultaneously.

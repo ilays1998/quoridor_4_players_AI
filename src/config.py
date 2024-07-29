@@ -34,3 +34,18 @@ class Direction(Enum):
     RIGHT = GRID_SIZE - 1, GRID_SIZE // 2
 
     __getitem__ = Enum.__getitem__  # Add this line to allow indexing Direction enum by integer
+
+
+MOVE_DIRECTIONS = {
+    Direction.LEFT: (-1, 0),
+    Direction.RIGHT: (1, 0),
+    Direction.UP: (0, -1),
+    Direction.DOWN: (0, 1),
+}
+
+
+class PossibleMoves(Enum):
+    MOVE = 1
+    WALL = 2
+    NOTHING = 3
+
