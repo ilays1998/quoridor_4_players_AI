@@ -2,6 +2,7 @@ import copy
 
 import pygame
 import sys
+import time
 
 from src.ai_agent_minmax import EvaluationFunction
 from src.config import CONSOLE_WIDTH, GRID_SIZE, SQUARE_SIZE, Direction, MOVE_DIRECTIONS, PossibleMoves
@@ -9,7 +10,7 @@ from src.player import Player
 
 
 class Game:
-    def __init__(self, screen, players, board, draw, ai_agent):
+    def __init__(self, screen, players, board, draw):
         self.screen = screen
         self.players = players
         self.board = board
@@ -17,7 +18,6 @@ class Game:
         self.selected_orientation = 'h'
         self.draw = draw
         self.clock = pygame.time.Clock()
-        self.ai_agent = ai_agent
 
     @staticmethod
     def calculate_grid_position(mouse_x, mouse_y):
@@ -132,14 +132,18 @@ class Game:
             print(f"Player {player.name} distance to goal: {distance}")
 
     def run(self):
+        self.draw.draw_game_screen(self.board, self.players, self.current_player_index, self.selected_orientation)
+        self.draw.update_screen()
+        self.clock.tick(60)
         while True:
+            time.sleep(0.3)
 
             current_player = self.players[self.current_player_index]
             action = PossibleMoves.NOTHING
             if current_player.player_is_AI:
                 self.print_distances_to_goal()
                 # make best move for AI player
-                best_move = self.ai_agent.choose_best_action(self.board, self.players, self.current_player_index)
+                best_move = current_player.ai_agent.choose_best_action(self.board, self.players, self.current_player_index)
                 action = best_move[0]
                 if action == PossibleMoves.MOVE:
                     self.finalize_player_move(current_player, best_move[1], best_move[2])

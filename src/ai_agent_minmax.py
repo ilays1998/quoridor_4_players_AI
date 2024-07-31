@@ -1,3 +1,5 @@
+import abc
+
 from src.board import Board
 from src.config import GRID_SIZE, MOVE_DIRECTIONS
 from src.game_state import GameState
@@ -91,16 +93,25 @@ class EvaluationFunction:
         return ai_distance - other_players_distance
 
 
-class AI_AgentMinMax:
-
+class AI_agent:
     def __init__(self, depth):
         self.depth = depth
 
-    def minimax(self, state: GameState, depth, player_index):
+    @abc.abstractmethod
+    def choose_best_action(self, board: Board, players, current_player_index):
+        return
+
+
+class AI_AgentMinMax(AI_agent):
+
+    def __init__(self, depth):
+        super().__init__(depth)
+
+    def minimax(self, state: GameState, depth, player_index, other_players):
         if depth == 0:
             return EvaluationFunction.evaluate(state, player_index), None
 
-        actions = state.generate_possible_moves(state.current_player_index)
+        actions = state.generate_possible_moves(state.current_player_index, other_players)
         best_action = None
 
         if player_index != 0:
@@ -109,7 +120,7 @@ class AI_AgentMinMax:
                 successor = state.apply_move(action)
                 if successor.game_over:
                     return EvaluationFunction.evaluate(state, player_index), action
-                new_value, _ = self.minimax(successor, depth - 1, player_index)
+                new_value, _ = self.minimax(successor, depth - 1, player_index, other_players)
                 if new_value > best_value:
                     best_value, best_action = new_value, action
         else:
@@ -118,7 +129,7 @@ class AI_AgentMinMax:
                 successor = state.apply_move(action)
                 if successor.game_over:
                     return EvaluationFunction.evaluate(state, player_index), action
-                new_value, _ = self.minimax(successor, depth - 1, player_index)
+                new_value, _ = self.minimax(successor, depth - 1, player_index, other_players)
                 if new_value < best_value:
                     best_value, best_action = new_value, action
 
@@ -141,18 +152,18 @@ class AI_AgentMinMax:
         # Use minimax to determine the best action for the current player against the nearest player
         best_value, best_action = self.minimax(GameState(board, [current_player, players[nearest_player_index]],
                                                          0, False), self.depth,
-                                               0)
+                                               0, players)
 
         return best_action
 
 
-class AI_AgentAlphaBeta:
+class AI_AgentAlphaBeta(AI_agent):
 
     def __init__(self, depth):
-        self.depth = depth
+        super().__init__(depth)
         self.transposition_table = {}
 
-    def alphabeta(self, state: GameState, depth, alpha, beta, player_index):
+    def alphabeta(self, state: GameState, depth, alpha, beta, player_index, other_players):
         state_key = state.hash()  # Assuming GameState has a hash method
         if state_key in self.transposition_table:
             return self.transposition_table[state_key]
@@ -162,7 +173,7 @@ class AI_AgentAlphaBeta:
             self.transposition_table[state_key] = (value, None)
             return value, None
 
-        actions = state.generate_possible_moves(state.current_player_index)
+        actions = state.generate_possible_moves(state.current_player_index, other_players)
         best_action = None
 
         if player_index != 0:
@@ -173,7 +184,7 @@ class AI_AgentAlphaBeta:
                     value = EvaluationFunction.evaluate(state, player_index)
                     self.transposition_table[state_key] = (value, action)
                     return value, action
-                new_value, _ = self.alphabeta(successor, depth - 1, alpha, beta, player_index)
+                new_value, _ = self.alphabeta(successor, depth - 1, alpha, beta, player_index, other_players)
                 if new_value > best_value:
                     best_value, best_action = new_value, action
                 alpha = max(alpha, best_value)
@@ -187,7 +198,7 @@ class AI_AgentAlphaBeta:
                     value = EvaluationFunction.evaluate(state, player_index)
                     self.transposition_table[state_key] = (value, action)
                     return value, action
-                new_value, _ = self.alphabeta(successor, depth - 1, alpha, beta, player_index)
+                new_value, _ = self.alphabeta(successor, depth - 1, alpha, beta, player_index, other_players)
                 if new_value < best_value:
                     best_value, best_action = new_value, action
                 beta = min(beta, best_value)
@@ -212,7 +223,6 @@ class AI_AgentAlphaBeta:
 
         best_value, best_action = self.alphabeta(GameState(board, [current_player, players[nearest_player_index]],
                                                            0, False), self.depth,
-                                                 float('-inf'), float('inf'), 0)
+                                                 float('-inf'), float('inf'), 0, players)
 
         return best_action
-

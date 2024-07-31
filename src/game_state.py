@@ -14,20 +14,20 @@ class GameState:
         self.current_player_index = current_player_index
         self.game_over = game_over
 
-    def generate_possible_moves(self, player_index: int):
+    def generate_possible_moves(self, player_index: int, other_players: list):
         moves = []
         player = self.players[player_index]
         # Add pawn movements using Direction enum
         for direction, (dx, dy) in MOVE_DIRECTIONS.items():
             new_x, new_y = player.x + dx, player.y + dy
-            if self.board.is_move_legal(new_x, new_y, self.players, direction, player, jump=False):
+            if self.board.is_move_legal(new_x, new_y, other_players, direction, player, jump=False):
 
-                for p in self.players:
+                for p in other_players:
                     if (p.x == new_x
                             and p.y == new_y):
                         if not self.board.check_win_condition(player.goal, new_x, new_y):
-                            new_x += MOVE_DIRECTIONS[direction][0]
-                            new_y += MOVE_DIRECTIONS[direction][1]
+                            new_x += dx
+                            new_y += dy
                             break
                 moves.append((PossibleMoves.MOVE, new_x,
                               new_y,

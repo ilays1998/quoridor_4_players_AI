@@ -15,7 +15,7 @@ def set_goal(direction):
 
 
 class Player:
-    def __init__(self, color, name, direction=None, x=0, y=0, player_is_AI=False):
+    def __init__(self, color, name, direction=None, x=0, y=0, player_is_AI=False, ai_agent=None):
         self.goal = None
         if direction is None:
             self.x, self.y = x, y
@@ -26,6 +26,7 @@ class Player:
         self.color = color
         self.name = name
         self.player_is_AI: bool = player_is_AI
+        self.ai_agent = ai_agent
 
 
     def get_position(self):

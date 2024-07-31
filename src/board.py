@@ -63,17 +63,6 @@ class Board:
         if new_x < 0 or new_x >= GRID_SIZE or new_y < 0 or new_y >= GRID_SIZE:
             return False
 
-        # Check that the new position is not occupied by another player
-        for player in players:
-            if player.x == new_x and player.y == new_y:
-                if jump:
-                    return False
-                else:
-                    return self.is_move_legal(new_x + MOVE_DIRECTIONS[direction][0],
-                                              new_y + MOVE_DIRECTIONS[direction][1], players,
-                                              direction,
-                                              current_player, jump=True) or self.check_win_condition(current_player.goal, new_x, new_y)
-
         # Check that the new position is not blocked by a wall
         if direction == Direction.UP:
             if new_x < GRID_SIZE - 1 and self.h_walls[new_y][new_x]:
@@ -95,6 +84,18 @@ class Board:
                 return False
             if new_y > 0 and self.v_walls[new_y - 1][new_x - 1]:
                 return False
+
+        # Check that the new position is not occupied by another player
+        if any(player.x == new_x and player.y == new_y for player in players):
+            if jump:
+                return False
+            else:
+                return self.is_move_legal(new_x + MOVE_DIRECTIONS[direction][0],
+                                          new_y + MOVE_DIRECTIONS[direction][1], players,
+                                          direction,
+                                          current_player, jump=True) or self.check_win_condition(current_player.goal, new_x, new_y)
+
+
         return True
 
     def check_win_condition(self, player_goal, player_x, player_y):
