@@ -61,3 +61,9 @@ class GameState:
             successor.current_player_index = (successor.current_player_index + 1) % len(successor.players)
 
         return successor
+
+    def hash(self):
+        # Create a unique hash based on the board state and player positions
+        board_hash = hash(str(self.board))
+        player_positions_hash = hash(tuple((player.x, player.y) for player in self.players))
+        return hash((board_hash, player_positions_hash, self.current_player_index))
