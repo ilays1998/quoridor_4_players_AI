@@ -39,7 +39,7 @@ class GameState:
         for x in range(GRID_SIZE - 1):
             for y in range(GRID_SIZE - 1):
                 for orientation in ['h', 'v']:
-                    if self.board.can_place_wall(x, y, orientation, self.players):
+                    if self.board.can_place_wall(x, y, orientation, other_players):
                         moves.append((PossibleMoves.WALL, x, y, orientation))
 
         return moves

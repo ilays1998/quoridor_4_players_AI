@@ -90,7 +90,7 @@ class EvaluationFunction:
             if i != AI_player_index:
                 other_players_distance += EvaluationFunction.a_star_path_length(state.board, player)
 
-        return ai_distance - other_players_distance
+        return ai_distance - (other_players_distance * 1.2)
 
 
 class AI_agent:
@@ -208,7 +208,16 @@ class AI_AgentAlphaBeta(AI_agent):
         self.transposition_table[state_key] = (best_value, best_action)
         return best_value, best_action
 
+    def iterative_deepening(self, initial_state, depth, player_index, other_players):
+        best_value, best_action = float('-inf'), None
+        for d in range(1, depth + 1):
+            value, action = self.alphabeta(initial_state, d, float('-inf'), float('inf'), player_index, other_players)
+            if value > best_value:
+                best_value, best_action = value, action
+        return best_value, best_action
+
     def choose_best_action(self, board: Board, players, current_player_index):
+        self.transposition_table = {}
         current_player = players[current_player_index]
 
         nearest_player_index = None
@@ -221,8 +230,10 @@ class AI_AgentAlphaBeta(AI_agent):
                     shortest_distance = distance
                     nearest_player_index = i
 
-        best_value, best_action = self.alphabeta(GameState(board, [current_player, players[nearest_player_index]],
-                                                           0, False), self.depth,
-                                                 float('-inf'), float('inf'), 0, players)
+        best_value, best_action = self.iterative_deepening(
+            GameState(board, [current_player, players[nearest_player_index]], 0, False),
+            self.depth, 0, players
+        )
 
         return best_action
+
