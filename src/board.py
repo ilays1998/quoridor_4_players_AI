@@ -59,7 +59,7 @@ class Board:
             return True
         return False
 
-    def is_move_legal(self, new_x, new_y, players, direction, jump: bool):
+    def is_move_legal(self, new_x, new_y, players, direction, current_player, jump: bool):
         if new_x < 0 or new_x >= GRID_SIZE or new_y < 0 or new_y >= GRID_SIZE:
             return False
 
@@ -72,7 +72,7 @@ class Board:
                     return self.is_move_legal(new_x + MOVE_DIRECTIONS[direction][0],
                                               new_y + MOVE_DIRECTIONS[direction][1], players,
                                               direction,
-                                              jump=True) or self.check_win_condition(player.goal, new_x, new_y)
+                                              current_player, jump=True) or self.check_win_condition(current_player.goal, new_x, new_y)
 
         # Check that the new position is not blocked by a wall
         if direction == Direction.UP:
@@ -124,7 +124,7 @@ class Board:
             for direction, (dx, dy) in MOVE_DIRECTIONS.items():
                 new_x, new_y = x + dx, y + dy
                 if 0 <= new_x < GRID_SIZE and 0 <= new_y < GRID_SIZE and (new_x, new_y) not in visited:
-                    if self.is_move_legal(new_x, new_y, [], direction, jump=False):
+                    if self.is_move_legal(new_x, new_y, [], direction, player, jump=False):
                         queue.append((new_x, new_y))
                         visited.add((new_x, new_y))
 

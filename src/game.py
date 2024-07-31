@@ -82,7 +82,7 @@ class Game:
 
         for player in self.players:
             if player.x == new_x and player.y == new_y:
-                if self.board.is_move_legal(new_x, new_y, [], direction, jump=False):
+                if self.board.is_move_legal(new_x, new_y, [], direction, current_player, jump=False):
                     if self.board.check_win_condition(current_player.goal, new_x, new_y):
                         player_jump_to_win = True
                     else:
@@ -90,7 +90,7 @@ class Game:
                         new_y += move[1]
                 break
 
-        if player_jump_to_win or self.board.is_move_legal(new_x, new_y, self.players, direction, jump=True):
+        if player_jump_to_win or self.board.is_move_legal(new_x, new_y, self.players, direction, current_player, jump=True):
             self.draw.draw_pseudo_move(Player((128, 128, 128), "pseudo", x=new_x, y=new_y), current_player,
                                        self.selected_orientation)
             self.draw.update_screen()

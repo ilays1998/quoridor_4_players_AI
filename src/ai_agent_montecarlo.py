@@ -97,7 +97,7 @@ class AI_Agent_MonteCarlo:
     def generate_possible_moves(self, board, player, players):
         moves = []
         for direction in [Direction.UP, Direction.DOWN, Direction.LEFT, Direction.RIGHT]:
-            if board.is_move_legal(player.x, player.y, players, direction, jump=False):
+            if board.is_move_legal(player.x, player.y, players, direction, player, jump=False):
                 moves.append((PossibleMoves.MOVE, player, players, player.x + MOVE_DIRECTIONS[direction][0],
                               player.y + MOVE_DIRECTIONS[direction][1], direction))
         if player.walls_left > 0:
@@ -139,7 +139,7 @@ class AI_Agent_MonteCarlo:
                 dx, dy = MOVE_DIRECTIONS[direction]
                 neighbor = (current[0] + dx, current[1] + dy)
                 if 0 <= neighbor[0] < GRID_SIZE and 0 <= neighbor[1] < GRID_SIZE:
-                    if board.is_move_legal(neighbor[0], neighbor[1], [], direction, jump=False):
+                    if board.is_move_legal(neighbor[0], neighbor[1], [], direction, player, jump=False):
                         tentative_g_score = g_score[current] + 1
                         if tentative_g_score < g_score[neighbor]:
                             came_from[neighbor] = current

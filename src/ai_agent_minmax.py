@@ -25,7 +25,7 @@ class EvaluationFunction:
             for direction, (dx, dy) in MOVE_DIRECTIONS.items():
                 neighbor = (x + dx, y + dy)
                 if 0 <= neighbor[0] < GRID_SIZE and 0 <= neighbor[1] < GRID_SIZE and neighbor not in visited:
-                    if board.is_move_legal(neighbor[0], neighbor[1], [], direction, jump=False):
+                    if board.is_move_legal(neighbor[0], neighbor[1], [], direction, player, jump=False):
                         queue.append((neighbor, path_length + 1))
                         visited.add(neighbor)
 
@@ -64,7 +64,7 @@ class EvaluationFunction:
             for direction, (dx, dy) in MOVE_DIRECTIONS.items():
                 neighbor = (current[0] + dx, current[1] + dy)
                 if 0 <= neighbor[0] < GRID_SIZE and 0 <= neighbor[1] < GRID_SIZE:
-                    if board.is_move_legal(neighbor[0], neighbor[1], [], direction, jump=False):
+                    if board.is_move_legal(neighbor[0], neighbor[1], [], direction, player, jump=False):
                         tentative_g_score = g_score[current] + 1
                         if tentative_g_score < g_score[neighbor]:
                             came_from[neighbor] = current
@@ -92,7 +92,6 @@ class EvaluationFunction:
 
 
 class AI_AgentMinMax:
-    # TODO: problem with the end if the other player is in the end place
 
     def __init__(self, depth):
         self.depth = depth
@@ -102,7 +101,7 @@ class AI_AgentMinMax:
             return EvaluationFunction.evaluate(state, player_index), None
 
         actions = state.generate_possible_moves(state.current_player_index)
-
+        print("Possible moves:", actions)
         best_action = None
 
         if player_index != 0:

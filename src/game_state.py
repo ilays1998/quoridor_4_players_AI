@@ -20,7 +20,7 @@ class GameState:
         # Add pawn movements using Direction enum
         for direction, (dx, dy) in MOVE_DIRECTIONS.items():
             new_x, new_y = player.x + dx, player.y + dy
-            if self.board.is_move_legal(new_x, new_y, self.players, direction, jump=False):
+            if self.board.is_move_legal(new_x, new_y, self.players, direction, player, jump=False):
 
                 for p in self.players:
                     if (p.x == new_x
