@@ -3,6 +3,7 @@ import copy
 import pygame
 import sys
 
+from src.ai_agent_minmax import EvaluationFunction
 from src.config import CONSOLE_WIDTH, GRID_SIZE, SQUARE_SIZE, Direction, MOVE_DIRECTIONS, PossibleMoves
 from src.player import Player
 
@@ -125,18 +126,23 @@ class Game:
             self.draw.update_screen()
             self.clock.tick(60)
 
+    def print_distances_to_goal(self):
+        for player in self.players:
+            distance = EvaluationFunction.a_star_path_length(self.board, player)
+            print(f"Player {player.name} distance to goal: {distance}")
+
     def run(self):
         while True:
+
             current_player = self.players[self.current_player_index]
             action = PossibleMoves.NOTHING
             if current_player.player_is_AI:
+                self.print_distances_to_goal()
                 # make best move for AI player
-                best_move = self.ai_agent.choose_best_move(
-                    (self.board, self.players, self.current_player_index, self.current_player_index, False))
-                # this is only return the move
+                best_move = self.ai_agent.choose_best_action(self.board, self.players, self.current_player_index)
                 action = best_move[0]
                 if action == PossibleMoves.MOVE:
-                    self.finalize_player_move(current_player, best_move[3], best_move[4])
+                    self.finalize_player_move(current_player, best_move[1], best_move[2])
                 elif action == PossibleMoves.WALL:
                     self.board.set_wall(best_move[1], best_move[2], best_move[3])
 

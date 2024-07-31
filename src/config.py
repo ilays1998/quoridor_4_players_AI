@@ -26,7 +26,6 @@ GRID_SIZE = 9
 SQUARE_SIZE = BOARD_WIDTH // GRID_SIZE
 WALL_THICKNESS = 5
 
-
 class Direction(Enum):
     UP = GRID_SIZE // 2, 0
     DOWN = GRID_SIZE // 2, GRID_SIZE - 1
