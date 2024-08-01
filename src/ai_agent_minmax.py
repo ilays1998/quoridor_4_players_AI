@@ -81,17 +81,17 @@ class EvaluationFunction:
         return float("inf")
 
     @staticmethod
-    def evaluate(state: GameState, AI_player_index):
+    def evaluate(state: GameState, other_player_index, AI_player_index):
         ai_player = state.players[AI_player_index]
         ai_distance = EvaluationFunction.a_star_path_length(state.board, ai_player)
-        ai_distance += state.players[AI_player_index].walls_left
+        if ai_distance == 0:
+            return float('-inf')
 
         other_players_distance = 0
-        for i, player in enumerate(state.players):
-            if i != AI_player_index:
-                player_not_ai_distance = EvaluationFunction.a_star_path_length(state.board, player)
-                other_players_distance += player_not_ai_distance
-                other_players_distance -= state.players[i].walls_left
+        player_not_ai_distance = EvaluationFunction.a_star_path_length(state.board, state.players[other_player_index])
+        other_players_distance += player_not_ai_distance
+        if player_not_ai_distance == 1 and state.players[AI_player_index].walls_left > 0:
+            return float('inf')
 
         # TODO: improve evaluation function
         return ai_distance - other_players_distance
@@ -111,9 +111,9 @@ class AI_AgentMinMax(AI_agent):
     def __init__(self, depth):
         super().__init__(depth)
 
-    def minimax(self, state: GameState, depth, player_index, other_players):
-        if depth == 0:
-            return EvaluationFunction.evaluate(state, player_index), None
+    def minimax(self, state: GameState, depth, player_index, other_players, AI_player_index):
+        if depth == 0 or state.game_over:
+            return EvaluationFunction.evaluate(state,  (player_index + 1) % 2 if self.depth % 2 == 0 else player_index, AI_player_index), None
 
         actions = state.generate_possible_moves(state.current_player_index, other_players)
         best_action = None
@@ -123,8 +123,8 @@ class AI_AgentMinMax(AI_agent):
             for action in actions:
                 successor = state.apply_move(action)
                 if successor.game_over:
-                    return EvaluationFunction.evaluate(state, player_index), action
-                new_value, _ = self.minimax(successor, depth - 1, player_index, other_players)
+                    return EvaluationFunction.evaluate(state, player_index, AI_player_index), action
+                new_value, _ = self.minimax(successor, depth - 1, (player_index + 1) % 2, other_players, AI_player_index)
                 if new_value > best_value:
                     best_value, best_action = new_value, action
         else:
@@ -132,8 +132,8 @@ class AI_AgentMinMax(AI_agent):
             for action in actions:
                 successor = state.apply_move(action)
                 if successor.game_over:
-                    return EvaluationFunction.evaluate(state, player_index), action
-                new_value, _ = self.minimax(successor, depth - 1, player_index, other_players)
+                    return EvaluationFunction.evaluate(state, player_index, AI_player_index), action
+                new_value, _ = self.minimax(successor, depth - 1,  (player_index + 1) % 2, other_players, AI_player_index)
                 if new_value < best_value:
                     best_value, best_action = new_value, action
 
@@ -156,54 +156,48 @@ class AI_AgentMinMax(AI_agent):
         # Use minimax to determine the best action for the current player against the nearest player
         best_value, best_action = self.minimax(GameState(board, [current_player, players[nearest_player_index]],
                                                          0, False), self.depth,
-                                               0, players)
+                                               0, players, 0)
 
         return best_action
 
 
 class AI_AgentAlphaBeta(AI_agent):
-    # TODO: Implement alpha-beta pruning this class not work well
+
     def __init__(self, depth):
         super().__init__(depth)
-        self.transposition_table = {}
 
-    def alphabeta(self, state: GameState, depth, alpha, beta, player_index, other_players):
-        state_key = state.hash()  # Assuming GameState has a hash method
-        if state_key in self.transposition_table:
-            return self.transposition_table[state_key]
-
+    def alphabeta(self, state: GameState, depth, player_index, other_players, alpha, beta, AI_player_index):
         if depth == 0 or state.game_over:
-            value = EvaluationFunction.evaluate(state, player_index)
-            self.transposition_table[state_key] = (value, None)
-            return value, None
+            return EvaluationFunction.evaluate(state, (player_index + 1) % 2 if self.depth % 2 == 0 else player_index, AI_player_index), None
 
         actions = state.generate_possible_moves(state.current_player_index, other_players)
         best_action = None
 
-        if player_index != 0:  # Maximizing player
-            best_value = float('-inf')
+        if player_index != 0:  # Maximizing agent
+            best_value = float("-inf")
             for action in actions:
                 successor = state.apply_move(action)
-                new_value, _ = self.alphabeta(successor, depth - 1, alpha, beta, player_index, other_players)
+                if successor.game_over:
+                    return EvaluationFunction.evaluate(successor, player_index, AI_player_index), action
+                new_value, _ = self.alphabeta(successor, depth - 1, (player_index + 1) % 2, other_players, alpha, beta, AI_player_index)
                 if new_value > best_value:
                     best_value, best_action = new_value, action
                 alpha = max(alpha, best_value)
                 if alpha >= beta:
-                    print(f"Pruned at depth {depth} with alpha {alpha} and beta {beta}")
-                    break
-        else:  # Minimizing player
-            best_value = float('inf')
+                    break  # Beta cut-off
+        else:  # Minimizing agent
+            best_value = float("inf")
             for action in actions:
                 successor = state.apply_move(action)
-                new_value, _ = self.alphabeta(successor, depth - 1, alpha, beta, player_index, other_players)
+                if successor.game_over:
+                    return EvaluationFunction.evaluate(successor, player_index, AI_player_index), action
+                new_value, _ = self.alphabeta(successor, depth - 1, (player_index + 1) % 2, other_players, alpha, beta, AI_player_index)
                 if new_value < best_value:
                     best_value, best_action = new_value, action
                 beta = min(beta, best_value)
                 if alpha >= beta:
-                    print(f"Pruned at depth {depth} with alpha {alpha} and beta {beta}")
-                    break
+                    break  # Alpha cut-off
 
-        self.transposition_table[state_key] = (best_value, best_action)
         return best_value, best_action
 
     def choose_best_action(self, board: Board, players, current_player_index):
@@ -221,7 +215,6 @@ class AI_AgentAlphaBeta(AI_agent):
 
         best_value, best_action = self.alphabeta(
             GameState(board, [current_player, players[nearest_player_index]], 0, False),
-            self.depth, float('-inf'), float('inf'), 0, players)
+            self.depth, 0, players, float('-inf'), float('inf'), 0)
 
         return best_action
-

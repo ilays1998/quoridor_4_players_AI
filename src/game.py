@@ -7,12 +7,45 @@ import time
 from src.ai_agent_minmax import EvaluationFunction
 from src.config import CONSOLE_WIDTH, GRID_SIZE, SQUARE_SIZE, Direction, MOVE_DIRECTIONS, PossibleMoves
 from src.player import Player
+from src.ai_agent_minmax import AI_AgentMinMax, AI_AgentAlphaBeta, AI_agent
+from src.config import RED, GREEN, BLUE, YELLOW, Direction
+
+
+
+def get_players(num_players):
+    ai_agent_minmax_depth2: AI_agent = AI_AgentMinMax(2)
+    ai_agent_minmax_depth1: AI_agent = AI_AgentMinMax(1)
+    ai_agent_alpha_beta_depth4: AI_agent = AI_AgentAlphaBeta(4)
+    ai_agent_alpha_beta_depth3: AI_agent = AI_AgentAlphaBeta(3)
+    ai_agent_alpha_beta_depth1: AI_agent = AI_AgentAlphaBeta(1)
+    ai_agent_alpha_beta_depth2: AI_agent = AI_AgentAlphaBeta(2)
+    players1 = [
+        Player(RED, "Red", Direction.UP, player_is_AI=True, ai_agent=ai_agent_alpha_beta_depth2),  # Red
+        Player(GREEN, "Green", Direction.DOWN, player_is_AI=True, ai_agent=ai_agent_alpha_beta_depth2),  # Green
+        Player(BLUE, "Blue", Direction.LEFT, player_is_AI=True, ai_agent=ai_agent_alpha_beta_depth2),  # Blue
+        Player(YELLOW, "Yellow", Direction.RIGHT)  # Yellow
+    ]
+    players = [
+        Player(RED, "Red", Direction.UP, player_is_AI=True, ai_agent=ai_agent_alpha_beta_depth3),  # Red
+        Player(GREEN, "Green", Direction.DOWN)  # Yellow
+    ]
+
+    players2 = [
+        Player(RED, "Red", Direction.UP),  # Red
+        Player(GREEN, "Green", Direction.DOWN),  # Green
+        Player(BLUE, "Blue", Direction.LEFT),  # Blue
+        Player(YELLOW, "Yellow", Direction.RIGHT)  # Yellow
+    ]
+    if num_players == 4:
+        return players1
+    elif num_players == 2:
+        return players
 
 
 class Game:
-    def __init__(self, screen, players, board, draw):
+    def __init__(self, screen, board, draw):
+        self.players = None
         self.screen = screen
-        self.players = players
         self.board = board
         self.current_player_index = 0
         self.selected_orientation = 'h'
@@ -132,6 +165,7 @@ class Game:
             print(f"Player {player.name} distance to goal: {distance}")
 
     def run(self):
+        self.new_game_window()
         self.draw.draw_game_screen(self.board, self.players, self.current_player_index, self.selected_orientation)
         self.draw.update_screen()
         self.clock.tick(60)
@@ -174,3 +208,24 @@ class Game:
             self.draw.draw_game_screen(self.board, self.players, self.current_player_index, self.selected_orientation)
             self.draw.update_screen()
             self.clock.tick(60)
+
+    def new_game_window(self):
+        self.draw.draw_new_game_options()
+        pygame.display.flip()
+
+        while True:
+            event = pygame.event.wait()
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = event.pos
+                if self.draw.is_four_players_option_clicked(x, y):
+                    self.start_new_game(4)
+                    break
+                elif self.draw.is_two_players_option_clicked(x, y):
+                    self.start_new_game(2)
+                    break
+
+    def start_new_game(self, num_players):
+        self.players = get_players(num_players)

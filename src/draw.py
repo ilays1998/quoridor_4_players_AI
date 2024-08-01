@@ -82,3 +82,20 @@ class Draw:
     def update_screen():
         # Call this method at the end of all drawing operations for a frame
         pygame.display.flip()
+
+    def draw_new_game_options(self):
+        self.screen.fill(LIGHT_WHITE)
+        four_players_rect = pygame.Rect(100, 100, 200, 50)
+        two_players_rect = pygame.Rect(100, 200, 200, 50)
+        pygame.draw.rect(self.screen, BLACK, four_players_rect)
+        pygame.draw.rect(self.screen, BLACK, two_players_rect)
+        self.draw_message("4 Players", WHITE, 36, (110, 110))
+        self.draw_message("2 Players", WHITE, 36, (110, 210))
+
+    @staticmethod
+    def is_four_players_option_clicked(x, y):
+        return 100 <= x <= 300 and 100 <= y <= 150
+
+    @staticmethod
+    def is_two_players_option_clicked(x, y):
+        return 100 <= x <= 300 and 200 <= y <= 250
