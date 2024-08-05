@@ -6,6 +6,10 @@ from src.config import CONSOLE_WIDTH, SCREEN_HEIGHT, LIGHT_WHITE, BLACK, SQUARE_
 class Draw:
     def __init__(self, screen):
         self.screen = screen
+        self.font = pygame.font.Font(None, 36)  # You can use a custom font file here
+        self.button_color = (50, 50, 150)
+        self.hover_color = (70, 70, 200)
+        self.text_color = (255, 255, 255)
 
     def draw_message(self, message, color, size, position):
         font = pygame.font.Font(None, size)  # You can adjust the font size as needed
@@ -83,19 +87,68 @@ class Draw:
         # Call this method at the end of all drawing operations for a frame
         pygame.display.flip()
 
-    def draw_new_game_options(self):
+    def draw_rounded_rect(self, rect, color, radius=20):
+        pygame.draw.rect(self.screen, color, rect, border_radius=radius)
+
+    def draw_new_game_options(self, board):
+        self.draw_empty_screen(board)
+        screen_width, screen_height = self.screen.get_size()
+        rect_width, rect_height = 200, 50
+        center_x = (screen_width - rect_width) // 2
+
+        four_players_rect = pygame.Rect(center_x, 100, rect_width, rect_height)
+        two_players_rect = pygame.Rect(center_x, 200, rect_width, rect_height)
+
+        mouse_pos = pygame.mouse.get_pos()
+        if four_players_rect.collidepoint(mouse_pos):
+            self.draw_rounded_rect(four_players_rect, self.hover_color)
+        else:
+            self.draw_rounded_rect(four_players_rect, self.button_color)
+
+        if two_players_rect.collidepoint(mouse_pos):
+            self.draw_rounded_rect(two_players_rect, self.hover_color)
+        else:
+            self.draw_rounded_rect(two_players_rect, self.button_color)
+
+        self.draw_message("4 Players", self.text_color, 36, (center_x + 10, 110))
+        self.draw_message("2 Players", self.text_color, 36, (center_x + 10, 210))
+
+    def draw_ai_player_options(self, num_players, board):
+        self.draw_empty_screen(board)
+        screen_width, screen_height = self.screen.get_size()
+        rect_width, rect_height = 200, 50
+        center_x = (screen_width - rect_width) // 2
+
+        mouse_pos = pygame.mouse.get_pos()
+        for i in range(num_players + 1):
+            ai_option_rect = pygame.Rect(center_x, 100 + i * 100, rect_width, rect_height)
+            if ai_option_rect.collidepoint(mouse_pos):
+                self.draw_rounded_rect(ai_option_rect, self.hover_color)
+            else:
+                self.draw_rounded_rect(ai_option_rect, self.button_color)
+            self.draw_message(f"{i} AI Players", self.text_color, 36, (center_x + 10, 110 + i * 100))
+
+    def is_four_players_option_clicked(self, x, y):
+        screen_width, _ = self.screen.get_size()
+        rect_width = 200
+        center_x = (screen_width - rect_width) // 2
+        return center_x <= x <= center_x + rect_width and 100 <= y <= 150
+
+    def is_two_players_option_clicked(self, x, y):
+        screen_width, _ = self.screen.get_size()
+        rect_width = 200
+        center_x = (screen_width - rect_width) // 2
+        return center_x <= x <= center_x + rect_width and 200 <= y <= 250
+
+    def is_ai_option_clicked(self, x, y, num_players):
+        screen_width, _ = self.screen.get_size()
+        rect_width = 200
+        center_x = (screen_width - rect_width) // 2
+        for i in range(num_players + 1):
+            if center_x <= x <= center_x + rect_width and 100 + i * 100 <= y <= 150 + i * 100:
+                return i
+        return -1
+
+    def draw_empty_screen(self, board):
         self.screen.fill(LIGHT_WHITE)
-        four_players_rect = pygame.Rect(100, 100, 200, 50)
-        two_players_rect = pygame.Rect(100, 200, 200, 50)
-        pygame.draw.rect(self.screen, BLACK, four_players_rect)
-        pygame.draw.rect(self.screen, BLACK, two_players_rect)
-        self.draw_message("4 Players", WHITE, 36, (110, 110))
-        self.draw_message("2 Players", WHITE, 36, (110, 210))
-
-    @staticmethod
-    def is_four_players_option_clicked(x, y):
-        return 100 <= x <= 300 and 100 <= y <= 150
-
-    @staticmethod
-    def is_two_players_option_clicked(x, y):
-        return 100 <= x <= 300 and 200 <= y <= 250
+        self.draw_board(board)

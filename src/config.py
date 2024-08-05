@@ -41,6 +41,12 @@ MOVE_DIRECTIONS = {
     Direction.UP: (0, -1),
     Direction.DOWN: (0, 1),
 }
+COLOR_NAMES = {
+    (255, 0, 0): "RED",
+    (0, 255, 0): "GREEN",
+    (0, 0, 255): "BLUE",
+    (255, 255, 0): "YELLOW"
+}
 
 
 class PossibleMoves(Enum):

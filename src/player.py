@@ -1,5 +1,9 @@
 import pygame
-from src.config import SQUARE_SIZE, CONSOLE_WIDTH, screen, GRID_SIZE, Direction
+
+from src.ai_agent_minmax import AI_AgentAlphaBeta
+from src.config import SQUARE_SIZE, CONSOLE_WIDTH, screen, GRID_SIZE, Direction, RED, GREEN, BLUE, YELLOW, COLOR_NAMES
+import random
+
 
 
 # Player class
@@ -32,3 +36,31 @@ class Player:
     def get_position(self):
         return self.x, self.y
 
+
+class PlayerFactory:
+    used_colors = set()
+    used_directions = set()
+    colors = [RED, GREEN, BLUE, YELLOW]
+    directions_for_4 = [Direction.UP, Direction.DOWN, Direction.LEFT, Direction.RIGHT]
+    directions_for_2 = [Direction.UP, Direction.DOWN]
+    ai_agent = AI_AgentAlphaBeta(2)
+
+    @staticmethod
+    def get_player(player_is_AI, num_players=4):
+        available_colors = [color for color in PlayerFactory.colors if color not in PlayerFactory.used_colors]
+        if num_players == 2:
+            available_directions = [direction for direction in PlayerFactory.directions_for_2 if direction not in PlayerFactory.used_directions]
+        else:
+            available_directions = [direction for direction in PlayerFactory.directions_for_4 if direction not in PlayerFactory.used_directions]
+
+        if not available_colors or not available_directions:
+            raise ValueError("No available colors or directions left")
+
+        color = random.choice(available_colors)
+        direction = random.choice(available_directions)
+
+        PlayerFactory.used_colors.add(color)
+        PlayerFactory.used_directions.add(direction)
+
+        return Player(color, f"{COLOR_NAMES[color]}", direction, player_is_AI=player_is_AI,
+                      ai_agent=PlayerFactory.ai_agent if player_is_AI else None)

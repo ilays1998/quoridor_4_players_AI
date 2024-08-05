@@ -6,40 +6,17 @@ import time
 
 from src.ai_agent_minmax import EvaluationFunction
 from src.config import CONSOLE_WIDTH, GRID_SIZE, SQUARE_SIZE, Direction, MOVE_DIRECTIONS, PossibleMoves
-from src.player import Player
+from src.player import Player, PlayerFactory
 from src.ai_agent_minmax import AI_AgentMinMax, AI_AgentAlphaBeta, AI_agent
 from src.config import RED, GREEN, BLUE, YELLOW, Direction
 
 
-
-def get_players(num_players):
-    ai_agent_minmax_depth2: AI_agent = AI_AgentMinMax(2)
-    ai_agent_minmax_depth1: AI_agent = AI_AgentMinMax(1)
-    ai_agent_alpha_beta_depth4: AI_agent = AI_AgentAlphaBeta(4)
-    ai_agent_alpha_beta_depth3: AI_agent = AI_AgentAlphaBeta(3)
-    ai_agent_alpha_beta_depth1: AI_agent = AI_AgentAlphaBeta(1)
-    ai_agent_alpha_beta_depth2: AI_agent = AI_AgentAlphaBeta(2)
-    players1 = [
-        Player(RED, "Red", Direction.UP, player_is_AI=True, ai_agent=ai_agent_alpha_beta_depth2),  # Red
-        Player(GREEN, "Green", Direction.DOWN, player_is_AI=True, ai_agent=ai_agent_alpha_beta_depth2),  # Green
-        Player(BLUE, "Blue", Direction.LEFT, player_is_AI=True, ai_agent=ai_agent_alpha_beta_depth2),  # Blue
-        Player(YELLOW, "Yellow", Direction.RIGHT)  # Yellow
-    ]
-    players = [
-        Player(RED, "Red", Direction.UP, player_is_AI=True, ai_agent=ai_agent_alpha_beta_depth3),  # Red
-        Player(GREEN, "Green", Direction.DOWN)  # Yellow
-    ]
-
-    players2 = [
-        Player(RED, "Red", Direction.UP),  # Red
-        Player(GREEN, "Green", Direction.DOWN),  # Green
-        Player(BLUE, "Blue", Direction.LEFT),  # Blue
-        Player(YELLOW, "Yellow", Direction.RIGHT)  # Yellow
-    ]
-    if num_players == 4:
-        return players1
-    elif num_players == 2:
-        return players
+def get_players(num_players, num_ai_players):
+    players = []
+    for i in range(num_players):
+        player_is_AI = i < num_ai_players
+        players.append(PlayerFactory.get_player(player_is_AI, num_players))
+    return players
 
 
 class Game:
@@ -123,7 +100,8 @@ class Game:
                         new_y += move[1]
                 break
 
-        if player_jump_to_win or self.board.is_move_legal(new_x, new_y, self.players, direction, current_player, jump=True):
+        if player_jump_to_win or self.board.is_move_legal(new_x, new_y, self.players, direction, current_player,
+                                                          jump=True):
             self.draw.draw_pseudo_move(Player((128, 128, 128), "pseudo", x=new_x, y=new_y), current_player,
                                        self.selected_orientation)
             self.draw.update_screen()
@@ -177,7 +155,8 @@ class Game:
             if current_player.player_is_AI:
                 self.print_distances_to_goal()
                 # make best move for AI player
-                best_move = current_player.ai_agent.choose_best_action(self.board, self.players, self.current_player_index)
+                best_move = current_player.ai_agent.choose_best_action(self.board, self.players,
+                                                                       self.current_player_index)
                 action = best_move[0]
                 if action == PossibleMoves.MOVE:
                     self.finalize_player_move(current_player, best_move[1], best_move[2])
@@ -210,8 +189,8 @@ class Game:
             self.clock.tick(60)
 
     def new_game_window(self):
-        self.draw.draw_new_game_options()
-        pygame.display.flip()
+        self.draw.draw_new_game_options(self.board)
+        self.draw.update_screen()
 
         while True:
             event = pygame.event.wait()
@@ -221,11 +200,27 @@ class Game:
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 x, y = event.pos
                 if self.draw.is_four_players_option_clicked(x, y):
-                    self.start_new_game(4)
+                    self.select_ai_players(4)
                     break
                 elif self.draw.is_two_players_option_clicked(x, y):
-                    self.start_new_game(2)
+                    self.select_ai_players(2)
                     break
 
-    def start_new_game(self, num_players):
-        self.players = get_players(num_players)
+    def select_ai_players(self, num_players):
+        self.draw.draw_ai_player_options(num_players, self.board)
+        self.draw.update_screen()
+
+        while True:
+            event = pygame.event.wait()
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = event.pos
+                num_ai_players = self.draw.is_ai_option_clicked(x, y, num_players)
+                if num_ai_players != -1:
+                    self.start_new_game(num_players, num_ai_players)
+                    break
+
+    def start_new_game(self, num_players, num_ai_players):
+        self.players = get_players(num_players, num_ai_players)

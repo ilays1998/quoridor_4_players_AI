@@ -3,9 +3,7 @@ import pygame
 from src.board import Board
 from src.draw import Draw
 from src.game import Game
-from src.player import Player
-from src.config import screen, RED, GREEN, BLUE, YELLOW, Direction
-
+from src.config import screen
 # Initialize Pygame
 pygame.init()
 
