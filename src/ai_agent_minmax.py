@@ -80,8 +80,7 @@ class EvaluationFunction:
 
         return float("inf")
 
-    @staticmethod
-    def evaluate(state: GameState, other_player_index, AI_player_index):
+    def evaluate(self, state: GameState, other_player_index, AI_player_index):
         ai_player = state.players[AI_player_index]
         ai_distance = EvaluationFunction.a_star_path_length(state.board, ai_player)
         if ai_distance == 0:
@@ -113,7 +112,8 @@ class AI_AgentMinMax(AI_agent):
 
     def minimax(self, state: GameState, depth, player_index, other_players, AI_player_index):
         if depth == 0 or state.game_over:
-            return EvaluationFunction.evaluate(state,  (player_index + 1) % 2 if self.depth % 2 == 0 else player_index, AI_player_index), None
+            return EvaluationFunction.evaluate(state, (player_index + 1) % 2 if self.depth % 2 == 0 else player_index,
+                                               AI_player_index), None
 
         actions = state.generate_possible_moves(state.current_player_index, other_players)
         best_action = None
@@ -124,7 +124,8 @@ class AI_AgentMinMax(AI_agent):
                 successor = state.apply_move(action)
                 if successor.game_over:
                     return EvaluationFunction.evaluate(state, player_index, AI_player_index), action
-                new_value, _ = self.minimax(successor, depth - 1, (player_index + 1) % 2, other_players, AI_player_index)
+                new_value, _ = self.minimax(successor, depth - 1, (player_index + 1) % 2, other_players,
+                                            AI_player_index)
                 if new_value > best_value:
                     best_value, best_action = new_value, action
         else:
@@ -133,7 +134,8 @@ class AI_AgentMinMax(AI_agent):
                 successor = state.apply_move(action)
                 if successor.game_over:
                     return EvaluationFunction.evaluate(state, player_index, AI_player_index), action
-                new_value, _ = self.minimax(successor, depth - 1,  (player_index + 1) % 2, other_players, AI_player_index)
+                new_value, _ = self.minimax(successor, depth - 1, (player_index + 1) % 2, other_players,
+                                            AI_player_index)
                 if new_value < best_value:
                     best_value, best_action = new_value, action
 
@@ -163,12 +165,15 @@ class AI_AgentMinMax(AI_agent):
 
 class AI_AgentAlphaBeta(AI_agent):
 
-    def __init__(self, depth):
+    def __init__(self, depth, evaluation_function=EvaluationFunction()):
+        self.evaluation_function = evaluation_function
         super().__init__(depth)
 
     def alphabeta(self, state: GameState, depth, player_index, other_players, alpha, beta, AI_player_index):
         if depth == 0 or state.game_over:
-            return EvaluationFunction.evaluate(state, (player_index + 1) % 2 if self.depth % 2 == 0 else player_index, AI_player_index), None
+            return self.evaluation_function.evaluate(state,
+                                                     (player_index + 1) % 2 if self.depth % 2 == 0 else player_index,
+                                                     AI_player_index), None
 
         actions = state.generate_possible_moves(state.current_player_index, other_players)
         best_action = None
@@ -178,8 +183,9 @@ class AI_AgentAlphaBeta(AI_agent):
             for action in actions:
                 successor = state.apply_move(action)
                 if successor.game_over:
-                    return EvaluationFunction.evaluate(successor, player_index, AI_player_index), action
-                new_value, _ = self.alphabeta(successor, depth - 1, (player_index + 1) % 2, other_players, alpha, beta, AI_player_index)
+                    return self.evaluation_function.evaluate(successor, player_index, AI_player_index), action
+                new_value, _ = self.alphabeta(successor, depth - 1, (player_index + 1) % 2, other_players, alpha, beta,
+                                              AI_player_index)
                 if new_value > best_value:
                     best_value, best_action = new_value, action
                 alpha = max(alpha, best_value)
@@ -190,8 +196,9 @@ class AI_AgentAlphaBeta(AI_agent):
             for action in actions:
                 successor = state.apply_move(action)
                 if successor.game_over:
-                    return EvaluationFunction.evaluate(successor, player_index, AI_player_index), action
-                new_value, _ = self.alphabeta(successor, depth - 1, (player_index + 1) % 2, other_players, alpha, beta, AI_player_index)
+                    return self.evaluation_function.evaluate(successor, player_index, AI_player_index), action
+                new_value, _ = self.alphabeta(successor, depth - 1, (player_index + 1) % 2, other_players, alpha, beta,
+                                              AI_player_index)
                 if new_value < best_value:
                     best_value, best_action = new_value, action
                 beta = min(beta, best_value)

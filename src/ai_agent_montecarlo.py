@@ -5,12 +5,15 @@ from src.board import Board
 from src.config import Direction, MOVE_DIRECTIONS, PossibleMoves, GRID_SIZE
 from src.player import Player
 
-
 class AI_Agent_MonteCarlo:
 
     def __init__(self, max_iterations, exploration_constant):
         self.max_iterations = max_iterations
         self.exploration_constant = exploration_constant
+
+    def choose_best_action(self, board: Board, players, current_player_index):
+        #TODO
+        return
 
     def mcts(self, game_state: (Board, [Player], int, int, bool)):
         root = Node(game_state)
