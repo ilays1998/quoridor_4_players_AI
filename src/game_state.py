@@ -14,6 +14,33 @@ class GameState:
         self.current_player_index = current_player_index
         self.game_over = game_over
 
+    def __str__(self):
+        result = ""
+        for index, player in enumerate(self.players):
+            result += f"player {index}: {player.get_position()}\n"
+
+        for i in range(GRID_SIZE):
+            result += '\n'
+            for j in range(GRID_SIZE):
+                if i < GRID_SIZE - 1 and j < GRID_SIZE - 1:
+
+                    if self.board.v_walls[i][j]:
+                        result += ("|| ")
+                    else:
+                        result += ("| ")
+                    if self.board.h_walls[i][j]:
+                        result += "="
+                    else:
+                        result += "-"
+                else:
+                    result += "-  "
+                for index, player in enumerate(self.players):
+                    if player.get_position()[0] == i and player.get_position()[1] == j:
+                        result += str(index)
+
+        result += "\n\n"
+        return result
+
     def generate_possible_moves(self, player_index: int, other_players: list):
         moves = []
         player = self.players[player_index]
@@ -22,7 +49,7 @@ class GameState:
             new_x, new_y = player.x + dx, player.y + dy
             if self.board.is_move_legal(new_x, new_y, other_players, direction, player, jump=False):
 
-                for p in other_players:
+                for p in other_players:  # jump above players
                     if (p.x == new_x
                             and p.y == new_y):
                         if not self.board.check_win_condition(player.goal, new_x, new_y):
@@ -45,6 +72,8 @@ class GameState:
         return moves
 
     def apply_move(self, move: tuple):
+        if self.game_over:
+            return None
         successor = GameState(self.board, self.players, self.current_player_index, self.game_over)
         if move[0] == PossibleMoves.MOVE:
             new_x, new_y, direction = move[1], move[2], move[3]
@@ -67,3 +96,12 @@ class GameState:
         board_hash = hash(str(self.board))
         player_positions_hash = hash(tuple((player.x, player.y) for player in self.players))
         return hash((board_hash, player_positions_hash, self.current_player_index))
+
+    def get_winner(self):
+        """
+        get the winner of the match. return None if match not over
+        :return: index of winner if game over, -1 if not
+        """
+        if not self.game_over:
+            return -1
+        return (self.current_player_index - 1) % (len(self.players))

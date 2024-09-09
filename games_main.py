@@ -19,7 +19,7 @@ if __name__ == "__main__":
     player_1 = Player(RED, "1", direction=Direction.LEFT,
                       player_is_AI=True, ai_agent=AI_AgentAlphaBeta(2))
     player_2 = Player(RED, "2", direction=Direction.RIGHT,
-                      player_is_AI=True, ai_agent=AI_AgentAlphaBeta(3))
+                      player_is_AI=True, ai_agent=AI_Agent_MonteCarlo(50, 1))
     player_3 = Player(RED, "3", direction=Direction.UP,
                       player_is_AI=True, ai_agent=AI_Agent_Random())
     player_4 = Player(RED, "4", direction=Direction.DOWN,
@@ -27,7 +27,9 @@ if __name__ == "__main__":
     players = [player_1, player_2]
     results = []
     durations = []
-    for i in range(2):
+    print("starting player 1: "+str(player_1.get_position()))
+    print("starting player 2: "+str(player_2.get_position()))
+    for i in range(10):
         game = AI_Game(Board(), players)
         start_time = time.process_time()
         game.run()

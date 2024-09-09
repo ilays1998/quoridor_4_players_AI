@@ -77,7 +77,7 @@ class AI_Game:
     def run(self):
         while True:
             current_player = self.players[self.current_player_index]
-            action = PossibleMoves.NOTHING
+            # action = PossibleMoves.NOTHING
 
             # self.print_distances_to_goal()
             # make best move for AI player
@@ -89,11 +89,10 @@ class AI_Game:
             elif action == PossibleMoves.WALL:
                 self.board.set_wall(best_move[1], best_move[2], best_move[3])
 
-            if not action == PossibleMoves.NOTHING:
-                if action == PossibleMoves.MOVE and self.board.check_win_condition(current_player.goal,
-                                                                                   current_player.x, current_player.y):
-                    self.winner = current_player
-                    return
-                if action == PossibleMoves.WALL:
-                    self.decrease_num_player_wall(current_player)
-                self.next_player_turn()
+            if action == PossibleMoves.MOVE and self.board.check_win_condition(current_player.goal,
+                                                                               current_player.x, current_player.y):
+                self.winner = current_player
+                return
+            if action == PossibleMoves.WALL:
+                self.decrease_num_player_wall(current_player)
+            self.next_player_turn()
