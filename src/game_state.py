@@ -15,31 +15,28 @@ class GameState:
         self.game_over = game_over
 
     def __str__(self):
-        result = ""
-        for index, player in enumerate(self.players):
-            result += f"player {index}: {player.get_position()}\n"
+        lines = []
+        for _ in range(GRID_SIZE):
+            lines.append(["+---"] * GRID_SIZE + ["+"])
+            lines.append(["|   "] * GRID_SIZE + ["|"])
+        lines.append(["+---"] * GRID_SIZE + ["+"])
 
-        for i in range(GRID_SIZE):
-            result += '\n'
-            for j in range(GRID_SIZE):
-                if i < GRID_SIZE - 1 and j < GRID_SIZE - 1:
+        for i in range(GRID_SIZE - 1):
+            for j in range(GRID_SIZE - 1):
+                if self.board.v_walls[i][j]:
+                    lines[i * 2 + 1][j+1] = "‖   "
+                    lines[i * 2 + 3][j+1] = "‖   "
+                if self.board.h_walls[i][j]:
+                    lines[i*2 + 2][j] = "+==="
+                    lines[i*2 + 2][j+1] = "+==="
 
-                    if self.board.v_walls[i][j]:
-                        result += ("|| ")
-                    else:
-                        result += ("| ")
-                    if self.board.h_walls[i][j]:
-                        result += "="
-                    else:
-                        result += "-"
-                else:
-                    result += "-  "
-                for index, player in enumerate(self.players):
-                    if player.get_position()[0] == i and player.get_position()[1] == j:
-                        result += str(index)
+        for player_index, player in enumerate(self.players):
+            x, y = player.get_position()
+            print(player.get_position())
+            prev_line = lines[y*2 + 1][x]
+            lines[y*2 + 1][x] = prev_line[:2] + f"{player_index}" + prev_line[2]
 
-        result += "\n\n"
-        return result
+        return "\n".join(["".join(line) for line in lines]) + "\n"
 
     def generate_possible_moves(self, player_index: int, other_players: list):
         moves = []

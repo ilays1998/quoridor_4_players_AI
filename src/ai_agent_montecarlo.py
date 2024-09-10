@@ -4,7 +4,7 @@ import random
 from src.board import Board
 from src.config import Direction, MOVE_DIRECTIONS, PossibleMoves, GRID_SIZE
 from src.game_state import GameState
-from src.player import Player
+from src.ai_agent_minmax import EvaluationFunction
 
 
 class AI_Agent_MonteCarlo():
@@ -16,18 +16,16 @@ class AI_Agent_MonteCarlo():
 
     def choose_best_action(self, board: Board, players, current_player_index):
         self.player_index = current_player_index
-        game_state = GameState(board, players, current_player_index, 0)
+        game_state = GameState(board, players, current_player_index, False)
         return self.mcts(game_state)
 
     def mcts(self, game_state: GameState):
         root = Node(game_state)
         for _ in range(self.max_iterations):
             node = self.select(root)
-            if not node.is_terminal():
-                node = self.expand(node)
-            reward = self.simulate(node.state)
+            reward = self.simulate(node)
             self.backpropagate(node, reward)
-        return self.best_child(root, 0).move
+        return self.best_child(root).move
 
     def select(self, node):
         while not node.is_terminal():
@@ -36,7 +34,7 @@ class AI_Agent_MonteCarlo():
             else:
                 #todo check if we even want to return the best child in that case
                 # or  just move to another ranch
-                node = self.best_child(node, self.exploration_constant)
+                node = self.best_uct_child(node)
         return node
 
     def expand(self, node):
@@ -46,18 +44,46 @@ class AI_Agent_MonteCarlo():
         node.children.append(child_node)
         return child_node
 
-    def simulate(self, game_state: GameState):
-        board = game_state.board
-        players = game_state.players
-        current_player_index = game_state.current_player_index
+    def simulate(self, node):
+        game_state = node.state
+        def simulate_policy(moves):
+            return random.choice(moves)
+            best_move = None
+            best_score = float("-inf")
 
+            random.shuffle(moves)
+            for move in moves:
+                current_player_distance = EvaluationFunction.a_star_path_length(board, players[current_player_index])
+                for player_index, player in enumerate(players):
+                    if player_index != current_player_index:
+                        other_player_distance = EvaluationFunction.a_star_path_length(board, players[player_index])
+                        score = other_player_distance - current_player_distance
+                        if score > best_score:
+                            best_score = score
+                            best_move = move
+                # score = -current_player_distance
+                # if score > best_score:
+                #     best_score = score
+                #     best_move = move
+            return best_move
+
+        iter = 0
         while not game_state.game_over:
+            # print(iter)
+            iter += 1
+            board = game_state.board
+            players = game_state.players
+            current_player_index = game_state.current_player_index
+
+            # print(game_state)
             possible_moves = game_state.generate_possible_moves(current_player_index, players)
             if possible_moves is None or not possible_moves:
-                print("gaame is over: "+game_state.game_over)
+                print("game is over: " + game_state.game_over)
                 print(game_state)
-            move = random.choice(possible_moves)
+            move = simulate_policy(possible_moves)
+            # print(move)
             game_state = game_state.apply_move(move)
+            # current_player_index = (current_player_index + 1) % len(players)
         # return self.evaluate_game_state(game_state)
         return self.reward(game_state)
 
@@ -70,15 +96,29 @@ class AI_Agent_MonteCarlo():
             node.reward += reward
             node = node.parent
 
-    def best_child(self, node, exploration_constant):
+    def best_uct_child(self, node):
         best_score = float('-inf')
         best_child = None
         for child in node.children:
             exploit = child.reward / child.visits
-            if child.visits == 0:
-                return child
-            explore = math.sqrt(2 * math.log(node.visits) / child.visits)
-            score = exploit + exploration_constant * explore
+            # if child.visits == 0:
+            #     return child
+            explore = math.sqrt(math.log(node.visits) / child.visits)
+            score = exploit + self.exploration_constant * explore
+            if score > best_score:
+                best_score = score
+                best_child = child
+        return best_child
+
+    def best_child(self, node):
+        """
+        Returns the child with the highest average reward
+        """
+        best_child = None
+        best_score = float("-inf")
+        assert (len(node.children) != 0)
+        for child in node.children:
+            score = child.visits
             if score > best_score:
                 best_score = score
                 best_child = child

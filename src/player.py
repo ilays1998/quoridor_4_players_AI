@@ -1,6 +1,8 @@
 import pygame
 
 from src.ai_agent_minmax import AI_AgentAlphaBeta
+from src.ai_agent_montecarlo import AI_Agent_MonteCarlo
+from src.ai_agent_random import AI_Agent_Random
 from src.config import SQUARE_SIZE, CONSOLE_WIDTH, screen, GRID_SIZE, Direction, RED, GREEN, BLUE, YELLOW, COLOR_NAMES
 import random
 
@@ -43,7 +45,8 @@ class PlayerFactory:
     colors = [RED, GREEN, BLUE, YELLOW]
     directions_for_4 = [Direction.UP, Direction.DOWN, Direction.LEFT, Direction.RIGHT]
     directions_for_2 = [Direction.UP, Direction.DOWN]
-    ai_agent = AI_AgentAlphaBeta(2)
+    ai_agents = [AI_AgentAlphaBeta(2) for _ in range(4)]
+    # ai_agents = [AI_Agent_MonteCarlo(10, 10) for _ in range(4)]
 
     @staticmethod
     def get_player(player_is_AI, num_players=4):
@@ -61,6 +64,6 @@ class PlayerFactory:
 
         PlayerFactory.used_colors.add(color)
         PlayerFactory.used_directions.add(direction)
+        ai_agent = PlayerFactory.ai_agents.pop() if player_is_AI else None
 
-        return Player(color, f"{COLOR_NAMES[color]}", direction, player_is_AI=player_is_AI,
-                      ai_agent=PlayerFactory.ai_agent if player_is_AI else None)
+        return Player(color, f"{COLOR_NAMES[color]}", direction, player_is_AI=player_is_AI, ai_agent=ai_agent)
