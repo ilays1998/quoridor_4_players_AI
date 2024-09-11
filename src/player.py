@@ -46,7 +46,7 @@ class PlayerFactory:
     directions_for_4 = [Direction.UP, Direction.DOWN, Direction.LEFT, Direction.RIGHT]
     directions_for_2 = [Direction.UP, Direction.DOWN]
     ai_agents = [AI_AgentAlphaBeta(2) for _ in range(4)]
-    # ai_agents = [AI_Agent_MonteCarlo(10, 10) for _ in range(4)]
+    # ai_agents = [AI_Agent_MonteCarlo(10000, 2, max_simulation_iter=2) for _ in range(4)]
 
     @staticmethod
     def get_player(player_is_AI, num_players=4):

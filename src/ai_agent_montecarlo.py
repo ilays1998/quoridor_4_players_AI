@@ -9,14 +9,15 @@ from src.ai_agent_minmax import EvaluationFunction
 
 class AI_Agent_MonteCarlo():
 
-    def __init__(self, max_iterations, exploration_constant):
+    def __init__(self, max_iterations, exploration_constant, max_simulation_iter=float("inf")):
         self.player_index = None
         self.max_iterations = max_iterations
         self.exploration_constant = exploration_constant
+        self.max_simulation_iter = max_simulation_iter
 
     def choose_best_action(self, board: Board, players, current_player_index):
         self.player_index = current_player_index
-        game_state = GameState(board, players, current_player_index, False)
+        game_state = GameState(board, players, current_player_index, game_over=False)
         return self.mcts(game_state)
 
     def mcts(self, game_state: GameState):
@@ -46,31 +47,48 @@ class AI_Agent_MonteCarlo():
 
     def simulate(self, node):
         game_state = node.state
+
+        states_history = [node.state]
+        state_history_max_size = 3
+
         def simulate_policy(moves):
             return random.choice(moves)
-            best_move = None
-            best_score = float("-inf")
-
             random.shuffle(moves)
+            best_move = moves[0]
+            best_score = float("-inf")
             for move in moves:
+                score = float("-inf")
+
+                # Maximize opponent distance to their goal while minimizing mine
                 current_player_distance = EvaluationFunction.a_star_path_length(board, players[current_player_index])
                 for player_index, player in enumerate(players):
                     if player_index != current_player_index:
                         other_player_distance = EvaluationFunction.a_star_path_length(board, players[player_index])
-                        score = other_player_distance - current_player_distance
-                        if score > best_score:
-                            best_score = score
-                            best_move = move
+                        tmp_score = other_player_distance - current_player_distance
+                        if tmp_score > score:
+                            score = tmp_score
+
+                # Avoid making moves that would take me back to previous positions
+                assert move is not None
+                if move[0] == PossibleMoves.MOVE:
+                    new_position = move[1], move[2]
+                    for prev_state in states_history:
+                        if prev_state.players[current_player_index].get_position() == new_position:
+                            score = float("-inf")
+
+                if score > best_score:
+                    best_score = score
+                    best_move = move
                 # score = -current_player_distance
                 # if score > best_score:
                 #     best_score = score
                 #     best_move = move
             return best_move
 
-        iter = 0
-        while not game_state.game_over:
-            # print(iter)
-            iter += 1
+        simulation_iter = 0
+        while not game_state.game_over and simulation_iter < self.max_simulation_iter:
+            simulation_iter += 1
+            # print(simulation_iter)
             board = game_state.board
             players = game_state.players
             current_player_index = game_state.current_player_index
@@ -83,12 +101,22 @@ class AI_Agent_MonteCarlo():
             move = simulate_policy(possible_moves)
             # print(move)
             game_state = game_state.apply_move(move)
-            # current_player_index = (current_player_index + 1) % len(players)
-        # return self.evaluate_game_state(game_state)
+
+            # Update state history
+            if len(states_history) == state_history_max_size:
+                states_history.pop(0)
+            states_history.append(game_state)
+
         return self.reward(game_state)
 
     def reward(self, game_state):
-        return game_state.get_winner() == self.player_index  # return 0 if other won 1 if we
+        if game_state.game_over:
+            if game_state.get_winner() == self.player_index:
+                return 1000
+            else:
+                return -1000
+
+        return - EvaluationFunction.a_star_path_length(game_state.board, game_state.players[self.player_index])
 
     def backpropagate(self, node, reward):
         while node is not None:

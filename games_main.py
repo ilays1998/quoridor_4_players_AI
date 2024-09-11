@@ -19,7 +19,7 @@ if __name__ == "__main__":
     player_1 = Player(RED, "1", direction=Direction.LEFT,
                       player_is_AI=True, ai_agent=AI_AgentAlphaBeta(2))
     player_2 = Player(RED, "2", direction=Direction.RIGHT,
-                      player_is_AI=True, ai_agent=AI_Agent_MonteCarlo(500, 2))
+                      player_is_AI=True, ai_agent=AI_Agent_MonteCarlo(10000, 2, max_simulation_iter=1))
     player_3 = Player(RED, "3", direction=Direction.UP,
                       player_is_AI=True, ai_agent=AI_Agent_Random())
     player_4 = Player(RED, "4", direction=Direction.DOWN,
