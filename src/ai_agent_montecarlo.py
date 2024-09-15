@@ -31,7 +31,7 @@ WIN_REWARD = 1000
 LOSE_REWARD = -1000
 
 
-class AI_Agent_MonteCarlo_1():
+class AI_Agent_MonteCarlo():
 
     def __init__(self, max_iterations, exploration_constant, max_simulation_iter=float("inf")):
         self.player_index = None

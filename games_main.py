@@ -1,4 +1,3 @@
-from src.Monte_Carlo_Elyashiv import AI_Agent_MonteCarlo_1
 from src.ai_game import AI_Game
 from src.board import Board
 from src.ai_agent_random import AI_Agent_Random
