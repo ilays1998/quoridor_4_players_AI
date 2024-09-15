@@ -3,7 +3,7 @@ import copy
 import pygame
 import sys
 import time
-
+from collections import defaultdict
 from src.ai_agent_minmax import EvaluationFunction
 from src.config import CONSOLE_WIDTH, GRID_SIZE, SQUARE_SIZE, Direction, MOVE_DIRECTIONS, PossibleMoves
 from src.player import Player, PlayerFactory
@@ -11,12 +11,16 @@ from src.ai_agent_minmax import AI_AgentMinMax, AI_AgentAlphaBeta, AI_agent
 from src.config import RED, GREEN, BLUE, YELLOW, Direction
 
 class AI_Game:
+    """
+    A class to run game with AI agents without GUI
+    """
     def __init__(self, board, players):
         self.players = players
         self.board = board
         self.current_player_index = 0
         self.selected_orientation = 'h'
         self.winner = None
+        self.players_turns_times = defaultdict(list)
 
     @staticmethod
     def calculate_grid_position(mouse_x, mouse_y):
@@ -76,6 +80,7 @@ class AI_Game:
 
     def run(self):
         while True:
+            start_time = time.process_time()
             current_player = self.players[self.current_player_index]
             # action = PossibleMoves.NOTHING
 
@@ -95,4 +100,5 @@ class AI_Game:
                 return
             if action == PossibleMoves.WALL:
                 self.decrease_num_player_wall(current_player)
+            self.players_turns_times[self.current_player_index].append(time.process_time() - start_time)
             self.next_player_turn()

@@ -23,9 +23,16 @@ class AI_Agent_MonteCarlo():
     def mcts(self, game_state: GameState):
         root = Node(game_state)
         for _ in range(self.max_iterations):
+            # import time
+            # start_time = time.process_time()
             node = self.select(root)
+            # print(f"select: {time.process_time() - start_time}")
+            # start_time = time.process_time()
             reward = self.simulate(node)
+            # print(f"simulate: {time.process_time() - start_time}")
+            # start_time = time.process_time()
             self.backpropagate(node, reward)
+            # print(f"back: {time.process_time() - start_time}")
         return self.best_child(root).move
 
     def select(self, node):
@@ -46,9 +53,11 @@ class AI_Agent_MonteCarlo():
         return child_node
 
     def simulate(self, node):
-        game_state = node.state
+        node_state = node.state
+        game_state = GameState(node_state.board, node_state.players,
+                               node_state.current_player_index, node_state.game_over)
 
-        states_history = [node.state]
+        states_history = [game_state]
         state_history_max_size = 3
 
         def simulate_policy(moves):
@@ -94,29 +103,38 @@ class AI_Agent_MonteCarlo():
             current_player_index = game_state.current_player_index
 
             # print(game_state)
-            possible_moves = game_state.generate_possible_moves(current_player_index, players)
+            possible_moves = AI_Agent_MonteCarlo.generate_possible_moves_with_heuristics(game_state, current_player_index)
             if possible_moves is None or not possible_moves:
-                print("game is over: " + game_state.game_over)
+                print("game is over: " + str(game_state.game_over))
                 print(game_state)
             move = simulate_policy(possible_moves)
             # print(move)
-            game_state = game_state.apply_move(move)
+            game_state.apply_move_on_current_state(move)
 
             # Update state history
-            if len(states_history) == state_history_max_size:
-                states_history.pop(0)
-            states_history.append(game_state)
+            # if len(states_history) == state_history_max_size:
+            #     states_history.pop(0)
+            # states_history.append(game_state)
 
         return self.reward(game_state)
 
     def reward(self, game_state):
+        score = 0
+
         if game_state.game_over:
             if game_state.get_winner() == self.player_index:
-                return 1000
+                score += 100
             else:
-                return -1000
+                score -= 100
 
-        return - EvaluationFunction.a_star_path_length(game_state.board, game_state.players[self.player_index])
+        board, players = game_state.board, game_state.players
+        score -= 10 * EvaluationFunction.a_star_path_length(board, players[self.player_index])
+
+        for player_index, player in enumerate(players):
+            if player_index != self.player_index:
+                score += EvaluationFunction.a_star_path_length(board, players[player_index])
+
+        return score
 
     def backpropagate(self, node, reward):
         while node is not None:
@@ -125,6 +143,9 @@ class AI_Agent_MonteCarlo():
             node = node.parent
 
     def best_uct_child(self, node):
+        if not node.children:
+            print(len(node.untried_moves))
+        assert node.children
         best_score = float('-inf')
         best_child = None
         for child in node.children:
@@ -144,13 +165,53 @@ class AI_Agent_MonteCarlo():
         """
         best_child = None
         best_score = float("-inf")
-        assert (len(node.children) != 0)
+        assert node.children
         for child in node.children:
-            score = child.visits
+            score = child.reward / child.visits
             if score > best_score:
                 best_score = score
                 best_child = child
         return best_child
+
+    @staticmethod
+    def generate_possible_moves_with_heuristics(game_state: GameState, current_player_index):
+        players, board = game_state.players, game_state.board
+        moves = []
+        if game_state.game_over:
+            return moves
+
+        player = players[current_player_index]
+        # Add pawn movements using Direction enum
+        for direction, (dx, dy) in MOVE_DIRECTIONS.items():
+            new_x, new_y = player.x + dx, player.y + dy
+            if board.is_move_legal(new_x, new_y, players, direction, player, jump=False):
+                for p in players:  # jump above players
+                    if (p.x == new_x
+                            and p.y == new_y):
+                        if not board.check_win_condition(player.goal, new_x, new_y):
+                            new_x += dx
+                            new_y += dy
+                            break
+                moves.append((PossibleMoves.MOVE, new_x,
+                              new_y,
+                              direction))
+
+        if player.walls_left > 0:
+            for player_index, player in enumerate(players):
+                if player_index == current_player_index:
+                    continue
+
+                offset = 3
+                other_player_distance_from_goal = EvaluationFunction.a_star_path_length(board, player)
+                if random.random() < 1/other_player_distance_from_goal:
+                    other_player_x, other_player_y = player.get_position()
+                    for x in range(other_player_x - offset, other_player_x + offset + 1):
+                        for y in range(other_player_y - offset, other_player_y - offset - 1):
+                            for orientation in ['h', 'v']:
+                                if 0 <= x < GRID_SIZE - 1 and 0 <= y < GRID_SIZE - 1 and board.can_place_wall(x, y, orientation, players):
+                                    moves.append((PossibleMoves.WALL, x, y, orientation))
+
+        return list(set(moves))
 
     # def apply_move(self, game_state: GameState, move):
     #     return game_state.apply_move(move)
@@ -249,7 +310,8 @@ class Node:
         self.parent = parent
         self.move = move
         self.children = []
-        self.untried_moves = state.generate_possible_moves(state.current_player_index, state.players)
+        self.untried_moves = AI_Agent_MonteCarlo.generate_possible_moves_with_heuristics(state, state.current_player_index)
+        random.shuffle(self.untried_moves)
         self.visits = 0
         self.reward = 0
 
