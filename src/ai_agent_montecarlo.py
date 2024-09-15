@@ -1,175 +1,155 @@
-import copy
 import math
 import random
+
+from src.ai_agent_minmax import EvaluationFunction
 from src.board import Board
-from src.config import Direction, MOVE_DIRECTIONS, PossibleMoves, GRID_SIZE
-from src.player import Player
-
-
-class AI_Agent_MonteCarlo:
-
-    def __init__(self, max_iterations, exploration_constant):
-        self.max_iterations = max_iterations
-        self.exploration_constant = exploration_constant
-
-    def mcts(self, game_state: (Board, [Player], int, int, bool)):
-        root = Node(game_state)
-        for _ in range(self.max_iterations):
-            node = self.select(root)
-            if not node.is_terminal():
-                node = self.expand(node)
-            reward = self.simulate(node.state)
-            self.backpropagate(node, reward)
-        return self.best_child(root, 0).move
-
-    def select(self, node):
-        while not node.is_terminal():
-            if not node.is_fully_expanded():
-                return self.expand(node)
-            else:
-                node = self.best_child(node, self.exploration_constant)
-        return node
-
-    def expand(self, node):
-        move = node.untried_moves.pop()
-        next_state = self.apply_move(node.state, move)
-        child_node = Node(next_state, parent=node, move=move)
-        node.children.append(child_node)
-        return child_node
-
-    def simulate(self, game_state):
-        board, players, current_player_index, AI_player_index, game_over = game_state
-        while not game_over:
-            possible_moves = self.generate_possible_moves(board, players[current_player_index], players)
-            move = random.choice(possible_moves)
-            game_state = self.apply_move(game_state, move)
-            board, players, current_player_index, AI_player_index, game_over = game_state
-        return self.evaluate_game_state(game_state)
-
-    def backpropagate(self, node, reward):
-        while node is not None:
-            node.visits += 1
-            node.reward += reward
-            node = node.parent
-
-    def best_child(self, node, exploration_constant):
-        best_score = float('-inf')
-        best_child = None
-        for child in node.children:
-            exploit = child.reward / child.visits
-            explore = math.sqrt(2 * math.log(node.visits) / child.visits)
-            score = exploit + exploration_constant * explore
-            if score > best_score:
-                best_score = score
-                best_child = child
-        return best_child
-
-    def apply_move(self, game_state, move):
-        board, players, current_player_index, AI_player_index, game_over = game_state
-        board = copy.deepcopy(board)
-        if move[0] == PossibleMoves.MOVE:
-            player, players, new_x, new_y, direction = copy.deepcopy(move[1]), copy.deepcopy(move[2]), move[3], move[4], \
-            move[5]
-            for p in players:
-                if p.x == new_x and p.y == new_y:
-                    if not board.check_win_condition(player.goal, new_x, new_y):
-                        player.x, player.y = (new_x + MOVE_DIRECTIONS[direction][0],
-                                              new_y + MOVE_DIRECTIONS[direction][1])
-                        break
-            player.x += MOVE_DIRECTIONS[direction][0]
-            player.y += MOVE_DIRECTIONS[direction][1]
-            if board.check_win_condition(player.goal, player.x, player.y):
-                game_over = True
-            current_player_index = (current_player_index + 1) % len(players)
-        elif move[0] == PossibleMoves.WALL:
-            x, y, orientation, players = move[1], move[2], move[3], move[4]
-            board.set_wall(x, y, orientation)
-            players[current_player_index].walls_left -= 1
-            current_player_index = (current_player_index + 1) % len(players)
-        return (board, players, current_player_index, AI_player_index, game_over)
-
-    def evaluate_game_state(self, game_state):
-        board, players, current_player_index, _, _ = game_state
-        ai_path_length = self.a_star_path_length(board, players[current_player_index])
-        score = ai_path_length
-        return score
-
-    def generate_possible_moves(self, board, player, players):
-        moves = []
-        for direction in [Direction.UP, Direction.DOWN, Direction.LEFT, Direction.RIGHT]:
-            if board.is_move_legal(player.x, player.y, players, direction, player, jump=False):
-                moves.append((PossibleMoves.MOVE, player, players, player.x + MOVE_DIRECTIONS[direction][0],
-                              player.y + MOVE_DIRECTIONS[direction][1], direction))
-        if player.walls_left > 0:
-            for x in range(GRID_SIZE - 1):
-                for y in range(GRID_SIZE - 1):
-                    for orientation in ['h', 'v']:
-                        if board.can_place_wall(x, y, orientation, players):
-                            moves.append((PossibleMoves.WALL, x, y, orientation, players))
-        return moves
-
-    def a_star_path_length(self, board, player):
-        from queue import PriorityQueue
-
-        def heuristic(a, b):
-            return abs(a[0] - b[0]) + abs(a[1] - b[1])
-
-        start = (player.x, player.y)
-        goal_positions = Board.get_goal_positions(player.goal)
-
-        open_set = PriorityQueue()
-        open_set.put((0, start))
-        came_from = {}
-        g_score = {node: float("inf") for node in [(x, y) for x in range(GRID_SIZE) for y in range(GRID_SIZE)]}
-        g_score[start] = 0
-        f_score = {node: float("inf") for node in [(x, y) for x in range(GRID_SIZE) for y in range(GRID_SIZE)]}
-        f_score[start] = min(heuristic(start, goal) for goal in goal_positions)
-
-        while not open_set.empty():
-            current = open_set.get()[1]
-
-            if current in goal_positions:
-                total_path = [current]
-                while current in came_from:
-                    current = came_from[current]
-                    total_path.append(current)
-                return len(total_path) - 1
-
-            for direction in Direction:
-                dx, dy = MOVE_DIRECTIONS[direction]
-                neighbor = (current[0] + dx, current[1] + dy)
-                if 0 <= neighbor[0] < GRID_SIZE and 0 <= neighbor[1] < GRID_SIZE:
-                    if board.is_move_legal(neighbor[0], neighbor[1], [], direction, player, jump=False):
-                        tentative_g_score = g_score[current] + 1
-                        if tentative_g_score < g_score[neighbor]:
-                            came_from[neighbor] = current
-                            g_score[neighbor] = tentative_g_score
-                            f_score[neighbor] = g_score[neighbor] + min(
-                                heuristic(neighbor, goal) for goal in goal_positions)
-                            if not any(neighbor == item[1] for item in open_set.queue):
-                                open_set.put((f_score[neighbor], neighbor))
-
-        return float("inf")
+from src.config import PossibleMoves, Direction
+from src.game_state import GameState
 
 
 class Node:
-    def __init__(self, state, parent=None, move=None):
+    def __init__(self, state: GameState, parent=None, move=None):
         self.state = state
         self.parent = parent
         self.move = move
         self.children = []
-        self.untried_moves = self.get_possible_moves(state)
+        self.untried_moves = state.generate_probable_moves(state.current_player_index, state.players)
         self.visits = 0
         self.reward = 0
 
-    def get_possible_moves(self, state):
-        board, players, current_player_index, _, _ = state
-        player = players[current_player_index]
-        return AI_Agent_MonteCarlo.generate_possible_moves(None, board, player, players)
-
     def is_terminal(self):
-        _, _, _, _, game_over = self.state
-        return game_over
+        return self.state.game_over
 
     def is_fully_expanded(self):
         return len(self.untried_moves) == 0
+
+
+from src.board import Board
+from src.game_state import GameState
+
+WIN_REWARD = 1000
+LOSE_REWARD = -1000
+
+
+class AI_Agent_MonteCarlo():
+
+    def __init__(self, max_iterations, exploration_constant, max_simulation_iter=float("inf")):
+        self.player_index = None
+        self.max_iterations = max_iterations
+        self.exploration_constant = exploration_constant
+        self.max_simulation_iter = max_simulation_iter
+
+    def choose_best_action(self, board: Board, players, current_player_index):
+        self.player_index = current_player_index
+        return self.mcts(board, players, current_player_index)
+
+    def opposite(self, direction):
+        if direction == Direction.UP:
+            return Direction.DOWN
+        elif direction == Direction.DOWN:
+            return Direction.UP
+        if direction == Direction.RIGHT:
+            return Direction.LEFT
+        if direction == Direction.LEFT:
+            return Direction.RIGHT
+
+
+    def cost(self, state, move):
+        if move[0] == PossibleMoves.MOVE:
+            if move[3] == state.players[state.current_player_index].goal:
+                return 36
+            if move[3] == self.opposite(state.players[state.current_player_index].goal):
+                return 2
+            else:
+                return 16
+        else:
+            return 1
+
+
+    def mcts(self, board, players, current_player_index):
+        state = GameState(board, players, current_player_index, game_over=False)
+        root = Node(state, None, None)
+        for i in range(self.max_iterations):
+            # if i % 10 == 0: print(i)
+            node = self.select(root)
+            reward = self.simulate(node)
+            self.backpropagate(reward, node)
+        # print(self.best_uct_child(root).move)
+        return self.best_uct_child(root).move
+
+    def select(self, root: Node):
+        node = root
+        while not node.is_terminal():
+            if not node.is_fully_expanded():
+                return self.expand(node)
+            else:
+                node = self.best_uct_child(node)
+        return node
+
+    def expand(self, node: Node):
+        move = node.untried_moves.pop()
+        next_state = node.state.apply_move(move)
+        child_node = Node(next_state, parent=node, move=move)
+        node.children.append(child_node)
+        return child_node
+
+    def reward(self, state: GameState):
+        if state.game_over:
+            if state.get_winner() == self.player_index:
+                return WIN_REWARD - state.players[self.player_index].walls_left
+            else:
+                return LOSE_REWARD - state.players[self.player_index].walls_left
+        return self.evaluate(state) - state.players[self.player_index].walls_left
+
+    def uct(self, node):
+        exploit = node.reward / node.visits
+        explore = math.sqrt(math.log(node.visits) / node.visits)
+        return exploit + self.exploration_constant * explore
+
+    def best_uct_child(self, node):
+        assert len(node.children) != 0
+        return max(node.children, key=lambda child: self.uct(child))
+
+    def choose_well(self,state, moves):
+        # return random.choice(moves)
+        # choose non uniformly:
+        cummultive_reward = 0
+        for move in moves:
+            cummultive_reward += self.cost(state, move)
+        pick = random.randint(0, cummultive_reward)
+        for move in moves:
+            cost = self.cost(state, move)
+            if pick <= cost:
+                return move
+            pick -= cost
+        raise ValueError("not suppose to happen", pick, cummultive_reward, moves[-1])
+
+    def simulate(self, node: Node):
+        state = GameState(node.state.board, node.state.players, node.state.current_player_index, game_over=False)
+        i = 0
+        while (not state.game_over) and i < self.max_simulation_iter:
+            moves = state.generate_probable_moves(state.current_player_index, state.players)
+            if len(moves) == 0:
+                return self.reward(state)
+            move = self.choose_well(state, moves)
+            state = state.apply_move_no_cpy(move)
+            i += 1
+        return self.reward(state)
+
+    def evaluate(self, state):
+        # other_player_length = 0
+        # for i in range(len(state.players)):
+        #     if i == self.player_index:
+        #         player_length = (EvaluationFunction.a_star_path_length
+        #                          (state.board, state.players[self.player_index]))
+        #     else:
+        #         other_player_length += (EvaluationFunction.a_star_path_length
+        #                          (state.board, state.players[i]))
+        # return -player_length+((other_player_length)/(len(state.players)-1))
+        return -EvaluationFunction.a_star_path_length(state.board, state.players[self.player_index])
+
+    def backpropagate(self, reward, node):
+        while node is not None:
+            node.visits += 1
+            node.reward += reward
+            node = node.parent

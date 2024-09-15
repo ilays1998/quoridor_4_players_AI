@@ -109,6 +109,7 @@ class Board:
             return True
         return False
 
+
     def can_player_win(self, player):
         from collections import deque
 

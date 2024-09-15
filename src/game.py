@@ -138,6 +138,7 @@ class Game:
             self.clock.tick(60)
 
     def print_distances_to_goal(self):
+        return
         for player in self.players:
             distance = EvaluationFunction.a_star_path_length(self.board, player)
             print(f"Player {player.name} distance to goal: {distance}")
