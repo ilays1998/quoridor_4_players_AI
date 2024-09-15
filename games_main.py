@@ -100,20 +100,5 @@ def stats_4():
     players = [player_1, player_2]
     run_games(players, 5)
 
-def stats_5():
-    """ 2-player: monte acrlo against minimax """
-    print("#####")
-    print("2-player game:")
-    print("player 1: monte carlo with 1000 iterations, const 2 and depth 100")
-    print("player 2: alpha beta depth 1")
-    print("#####")
-    player_1 = Player(RED, "alpha-beta", direction=Direction.LEFT,
-                      player_is_AI=True, ai_agent=AI_AgentAlphaBeta(2))
-    player_2 = Player(RED, "monte-carlo", direction=Direction.RIGHT,
-                      player_is_AI=True, ai_agent=AI_Agent_MonteCarlo_1(10000, 2, 100))
-    players = [player_1, player_2]
-    run_games(players, 5)
-
-
 if __name__ == "__main__":
-    stats_5()
+    stats_1()
